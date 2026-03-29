@@ -33,11 +33,11 @@ export default function Sidebar({ isCollapsed, setIsCollapsed }: any) {
       }`}
     >
       {/* Logo Section */}
-      <div className="h-24 flex items-center px-8 border-b border-slate-50 mb-6">
+      <div className={`h-24 flex items-center border-b border-slate-50 mb-6 transition-all duration-700 ${isCollapsed ? 'justify-center px-0' : 'px-8'}`}>
         <Link href="/dashboard" className="flex items-center gap-4 group">
           <motion.div 
             whileHover={{ scale: 1.1, rotate: 5 }}
-            className="w-12 h-12 bg-gradient-to-br from-primary to-secondary rounded-2xl flex items-center justify-center text-white shadow-xl shadow-primary/20"
+            className="w-12 h-12 bg-gradient-to-br from-primary to-secondary rounded-2xl flex items-center justify-center text-white shadow-xl shadow-primary/20 shrink-0"
           >
             <Zap className="w-7 h-7 fill-current" />
           </motion.div>
@@ -68,10 +68,20 @@ export default function Sidebar({ isCollapsed, setIsCollapsed }: any) {
                 href={item.href}
                 className={`${
                   isActive ? 'nav-item-active shadow-flow-ambient' : 'nav-item'
-                } ${isCollapsed ? 'justify-center px-0' : 'px-8'}`}
+                } transition-all duration-500 ${isCollapsed ? 'justify-center px-0 gap-0' : 'px-8 gap-4'}`}
               >
-                <item.icon className={`w-6 h-6 ${isActive ? 'text-primary' : 'group-hover:text-primary transition-colors'}`} />
-                {!isCollapsed && <span className="text-sm tracking-tight">{item.label}</span>}
+                <div className="flex items-center justify-center w-6 h-6 shrink-0">
+                  <item.icon className={`w-6 h-6 ${isActive ? 'text-primary' : 'group-hover:text-primary transition-colors'}`} />
+                </div>
+                {!isCollapsed && (
+                  <motion.span 
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    className="text-sm tracking-tight"
+                  >
+                    {item.label}
+                  </motion.span>
+                )}
                 {isActive && !isCollapsed && (
                   <motion.div 
                     layoutId="active-indicator"
@@ -85,12 +95,12 @@ export default function Sidebar({ isCollapsed, setIsCollapsed }: any) {
       </nav>
 
       {/* Footer / Toggle */}
-      <div className="p-6 border-t border-slate-50">
+      <div className={`p-6 border-t border-slate-50 transition-all duration-700 ${isCollapsed ? 'px-4' : 'px-6'}`}>
         <button 
           onClick={() => setIsCollapsed(!isCollapsed)}
-          className="w-full flex items-center gap-4 p-4 rounded-3xl hover:bg-slate-50 transition-all duration-300 text-slate-400 group"
+          className={`w-full flex items-center rounded-3xl hover:bg-slate-50 transition-all duration-300 text-slate-400 group ${isCollapsed ? 'justify-center p-4 px-0' : 'gap-4 p-4'}`}
         >
-          <ChevronLeft className={`w-6 h-6 transition-transform duration-500 group-hover:text-primary ${isCollapsed ? 'rotate-180 mx-auto' : ''}`} />
+          <ChevronLeft className={`w-6 h-6 transition-transform duration-500 group-hover:text-primary shrink-0 ${isCollapsed ? 'rotate-180' : ''}`} />
           {!isCollapsed && <span className="text-sm font-bold tracking-tight group-hover:text-slate-600 transition-colors">Minimize View</span>}
         </button>
       </div>
