@@ -18,11 +18,11 @@ export default function TopHeader({ isCollapsed }: { isCollapsed?: boolean }) {
   };
 
   return (
-    <header className="h-14 px-6 flex items-center justify-between z-40 bg-white border-b border-slate-100 shrink-0">
+    <header className="h-16 px-8 flex items-center justify-between z-40 bg-white border-b border-slate-100 shrink-0">
       {/* Left: Title */}
-      <div className="flex items-center gap-3">
-        <h2 className="text-sm font-bold text-slate-900 tracking-tight">{getTitle()}</h2>
-        <span className="text-[9px] text-slate-400 font-medium uppercase tracking-widest">/ Rhythm</span>
+      <div className="flex items-center gap-4">
+        <h2 className="text-base font-bold text-slate-900 tracking-tight">{getTitle()}</h2>
+        <span className="text-[10px] text-slate-400 font-medium uppercase tracking-widest">/ Rhythm</span>
       </div>
 
       {/* Right: Actions */}
@@ -39,14 +39,14 @@ export default function TopHeader({ isCollapsed }: { isCollapsed?: boolean }) {
           <input 
             type="text" 
             placeholder="Search..." 
-            className="pl-9 pr-4 w-52 h-9 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-900 focus:outline-none focus:border-primary/30 focus:bg-white focus:ring-2 focus:ring-primary/5 transition-all placeholder:text-slate-400"
+            className="pl-10 pr-4 w-60 h-10 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-900 focus:outline-none focus:border-primary/30 focus:bg-white focus:ring-4 focus:ring-primary/5 transition-all placeholder:text-slate-400"
           />
         </div>
 
         {/* Notifications */}
-        <button className="relative p-2 bg-slate-50 border border-slate-200 rounded-lg hover:bg-white hover:border-slate-300 transition-all">
-          <Bell className="w-3.5 h-3.5 text-slate-500" />
-          <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-red-500 rounded-full border border-white" />
+        <button className="relative p-2.5 bg-slate-50 border border-slate-200 rounded-xl hover:bg-white hover:border-slate-300 transition-all">
+          <Bell className="w-4 h-4 text-slate-500" />
+          <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white" />
         </button>
 
         {/* Divider */}
@@ -55,11 +55,11 @@ export default function TopHeader({ isCollapsed }: { isCollapsed?: boolean }) {
         {/* Profile */}
         <div className="flex items-center gap-2.5 cursor-pointer group">
           <div className="text-right hidden sm:block">
-            <p className="text-xs font-bold text-slate-900 group-hover:text-primary transition-colors leading-none">Gokul</p>
-            <p className="text-[9px] text-slate-400 font-medium leading-none mt-0.5">Flow Testnet</p>
+            <p className="text-sm font-bold text-slate-900 group-hover:text-primary transition-colors leading-none">Gokul</p>
+            <p className="text-[10px] text-slate-400 font-medium leading-none mt-1">Flow Testnet</p>
           </div>
-          <div className="w-8 h-8 rounded-lg bg-primary/5 border border-primary/10 flex items-center justify-center">
-            <User className="w-4 h-4 text-primary" />
+          <div className="w-9 h-9 rounded-xl bg-primary/5 border border-primary/10 flex items-center justify-center">
+            <User className="w-4.5 h-4.5 text-primary" />
           </div>
         </div>
       </div>
