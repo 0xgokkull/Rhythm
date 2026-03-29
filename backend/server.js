@@ -1,150 +1,177 @@
 const express = require('express');
-const cors = require('cors');
+const cors    = require('cors');
 const { ethers } = require('ethers');
 const sqlite3 = require('sqlite3').verbose();
-const path = require('path');
+const crypto  = require('crypto');
+const path    = require('path');
 require('dotenv').config();
 
-const app = express();
+const app  = express();
 const PORT = process.env.PORT || 4000;
+const RPC  = process.env.RPC_URL || 'https://testnet.evm.nodes.onflow.org';
 
 app.use(express.json());
 app.use(cors());
 
-// ── Deployed Contract Addresses (Flow EVM Testnet) ──────────────────────────
+// ── Deployed Contract Addresses (Flow EVM Testnet, Chain 545) ────────────────
 const ADDRESSES = {
-  RuleEngine:           '0xd3215799fB97296853BC07203c369e2611be55f3',
-  VaultLedger:          '0xd41B3eBDC73Dc92816e7B397726A9caF09319840',
-  TreasuryManager:      '0xc9624F90c36357093AA96c689AaC423c16249C99',
-  ExecutionEngine:      '0xC92D970130c0F54eE24Cf81Cc4cB74925a9022d8',
-  AutomationController: '0x472e1f2F3a237Ea213D5144c945B6Cfc75190F6a',
+  RuleEngine:           '0x02a0Fc6088A441A6CE86Cf7d09c2a31245e67619',
+  VaultLedger:          '0xb96BFf5fE3ce64D29cAAcC253E2c90392be88085',
+  TreasuryManager:      '0x04F80c1DA4D8FCf676E7174e3BBA47BF367a73F9',
+  ExecutionEngine:      '0x338bBC23F6049fb0FD54a7A8d2e4e26952A0B448',
+  AutomationController: '0xD93b31cc5B6E995744D0D3c7d09f5c2E340E3b10',
 };
 
-// ── Minimal ABIs (only what the API needs) ───────────────────────────────────
+// ── ABIs ─────────────────────────────────────────────────────────────────────
 const RULE_ENGINE_ABI = [
   'function setRule(uint8 _savings, uint8 _bills) external',
   'function getRule(address _user) external view returns (uint8, uint8, uint8)',
-  'event RuleUpdated(address indexed user, uint8 savings, uint8 bills, uint8 version)',
 ];
 
 const VAULT_LEDGER_ABI = [
   'function getBalances(address _user) external view returns (uint256, uint256, uint256, uint256)',
-  'event VaultUpdated(address indexed user, uint256 savings, uint256 bills, uint256 spend)',
+  'function getTotalBalance(address _user) external view returns (uint256)',
 ];
 
-const AUTOMATION_CONTROLLER_ABI = [
-  'function triggerExecution(address _user, uint256 _amount) external',
-  'function userExecutionStates(address) external view returns (uint8 retryCount, uint8 status, uint256 lastAttempt)',
-  'event ExecutionStarted(address indexed user, uint256 amount)',
-  'event ExecutionCompleted(address indexed user)',
-  'event ExecutionFailed(address indexed user, string reason)',
-  'event RetryScheduled(address indexed user, uint8 attempt)',
+const AUTOMATION_ABI = [
+  'function triggerExecution(address _user, uint256 _amount, bytes32 _executionId) external',
+  'function userExecutionStates(address) external view returns (uint8 retryCount, uint8 status, uint256 lastAttempt, uint256 nextRetryTime, bytes32 executionId)',
+  'event ExecutionStarted(address indexed user, uint256 amount, bytes32 executionId)',
+  'event ExecutionCompleted(address indexed user, bytes32 executionId)',
+  'event ExecutionFailed(address indexed user, string reason, uint8 attempt)',
+  'event RetryScheduled(address indexed user, uint8 attempt, uint256 nextRetryTime)',
 ];
 
 // ── Provider + Wallet ────────────────────────────────────────────────────────
-const provider = new ethers.JsonRpcProvider('https://testnet.evm.nodes.onflow.org');
-const wallet   = process.env.RELAYER_PRIVATE_KEY
+const provider   = new ethers.JsonRpcProvider(RPC);
+const wallet     = process.env.RELAYER_PRIVATE_KEY
   ? new ethers.Wallet(process.env.RELAYER_PRIVATE_KEY, provider)
   : null;
 
-const ruleEngine  = new ethers.Contract(ADDRESSES.RuleEngine,   RULE_ENGINE_ABI,   wallet || provider);
-const vaultLedger = new ethers.Contract(ADDRESSES.VaultLedger,  VAULT_LEDGER_ABI,  provider);
-const controller  = new ethers.Contract(ADDRESSES.AutomationController, AUTOMATION_CONTROLLER_ABI, wallet || provider);
+const ruleEngine  = new ethers.Contract(ADDRESSES.RuleEngine,   RULE_ENGINE_ABI,  wallet || provider);
+const vaultLedger = new ethers.Contract(ADDRESSES.VaultLedger,  VAULT_LEDGER_ABI, provider);
+const controller  = new ethers.Contract(ADDRESSES.AutomationController, AUTOMATION_ABI, wallet || provider);
 
-// ── SQLite (Activity log) ────────────────────────────────────────────────────
-const db = new sqlite3.Database(path.join(__dirname, 'data/rhythm.sqlite'), (err) => {
-  if (err) console.error('[DB] Failed to open:', err.message);
-});
-
+// ── SQLite (Upgraded Schema) ──────────────────────────────────────────────────
+const db = new sqlite3.Database(path.join(__dirname, 'data/rhythm.sqlite'));
 db.run(`CREATE TABLE IF NOT EXISTS executions (
-  tx_hash      TEXT PRIMARY KEY,
-  user_address TEXT,
-  amount       TEXT,
-  status       TEXT,
-  timestamp    INTEGER
+  tx_hash       TEXT PRIMARY KEY,
+  execution_id  TEXT UNIQUE,
+  user_address  TEXT,
+  amount        TEXT,
+  status        TEXT,
+  retry_count   INTEGER DEFAULT 0,
+  error_message TEXT,
+  stage         TEXT DEFAULT 'trigger',
+  timestamp     INTEGER
 )`);
 
-// ── Endpoints ────────────────────────────────────────────────────────────────
+// ── Rate Limiting (per-user cooldown: 30s) ───────────────────────────────────
+const lastRequest = {};
+function rateLimit(req, res, next) {
+  const user = req.body?.user || req.params?.user;
+  if (!user) return next();
+  const now  = Date.now();
+  const last = lastRequest[user] || 0;
+  if (now - last < 30_000) {
+    return res.status(429).json({ error: 'Rate limit: wait 30s between executions' });
+  }
+  lastRequest[user] = now;
+  next();
+}
 
-// GET /health — quick system check
+// ── Endpoints ─────────────────────────────────────────────────────────────────
+
 app.get('/health', async (_req, res) => {
   try {
     const block = await provider.getBlockNumber();
-    res.json({ ok: true, block, contracts: ADDRESSES });
+    res.json({ ok: true, block, rpc: RPC, contracts: ADDRESSES });
   } catch (e) {
     res.status(500).json({ ok: false, error: e.message });
   }
 });
 
-// GET /vault/:user — live vault balances from chain
-app.get('/vault/:user', async (req, res) => {
-  try {
-    const [savings, bills, spend, updatedAt] = await vaultLedger.getBalances(req.params.user);
-    res.json({
-      savings:   ethers.formatUnits(savings, 6),
-      bills:     ethers.formatUnits(bills,   6),
-      spend:     ethers.formatUnits(spend,   6),
-      updatedAt: Number(updatedAt),
-    });
-  } catch (e) {
-    res.status(500).json({ error: e.message });
-  }
-});
-
-// GET /rule/:user — on-chain split rule
 app.get('/rule/:user', async (req, res) => {
   try {
     const [savings, bills, spend] = await ruleEngine.getRule(req.params.user);
     res.json({ savings: Number(savings), bills: Number(bills), spend: Number(spend) });
-  } catch (e) {
-    res.status(500).json({ error: e.message });
-  }
+  } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// POST /rule/set — update split rule (relayer-sponsored)
-app.post('/rule/set', async (req, res) => {
+app.post('/rule/set', rateLimit, async (req, res) => {
   if (!wallet) return res.status(400).json({ error: 'No relayer key configured' });
   const { savings, bills } = req.body;
+  if (savings + bills > 100) return res.status(400).json({ error: 'Rule sum exceeds 100' });
   try {
     const tx = await ruleEngine.setRule(savings, bills);
     await tx.wait(1);
     res.json({ success: true, txHash: tx.hash });
-  } catch (e) {
-    res.status(500).json({ error: e.message });
-  }
+  } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// POST /execution/trigger — trigger autopilot split
-app.post('/execution/trigger', async (req, res) => {
+app.get('/vault/:user', async (req, res) => {
+  try {
+    const [savings, bills, spend, updatedAt] = await vaultLedger.getBalances(req.params.user);
+    const total = await vaultLedger.getTotalBalance(req.params.user);
+    res.json({
+      savings:   ethers.formatEther(savings),
+      bills:     ethers.formatEther(bills),
+      spend:     ethers.formatEther(spend),
+      total:     ethers.formatEther(total),
+      updatedAt: Number(updatedAt),
+    });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// POST /execution/trigger — idempotent, rate-limited
+app.post('/execution/trigger', rateLimit, async (req, res) => {
   if (!wallet) return res.status(400).json({ error: 'No relayer key configured' });
   const { user, amount } = req.body;
+  if (!user || !amount) return res.status(400).json({ error: 'user and amount required' });
+
+  // Generate deterministic execution ID (idempotency key)
+  const executionId = '0x' + crypto.createHash('sha256')
+    .update(`${user}-${amount}-${Date.now()}`)
+    .digest('hex');
+
+  const parsed = ethers.parseEther(String(amount));
+
+  // Log as pending before broadcast
+  db.run(`INSERT OR IGNORE INTO executions VALUES (?,?,?,?,?,?,?,?,?)`,
+    [null, executionId, user, String(amount), 'pending', 0, null, 'trigger', Date.now()]);
+
   try {
-    const parsed = ethers.parseUnits(String(amount), 6);
-    const tx = await controller.triggerExecution(user, parsed);
-    db.run(`INSERT OR IGNORE INTO executions VALUES (?, ?, ?, ?, ?)`,
-      [tx.hash, user, String(amount), 'pending', Date.now()]);
+    const tx = await controller.triggerExecution(user, parsed, executionId);
+    db.run(`UPDATE executions SET tx_hash=?, status='submitted', stage='broadcast' WHERE execution_id=?`,
+      [tx.hash, executionId]);
+
     await tx.wait(1);
-    db.run(`UPDATE executions SET status='success' WHERE tx_hash=?`, [tx.hash]);
-    res.json({ success: true, txHash: tx.hash });
+    db.run(`UPDATE executions SET status='success', stage='confirmed' WHERE execution_id=?`, [executionId]);
+    res.json({ success: true, txHash: tx.hash, executionId });
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    db.run(`UPDATE executions SET status='failed', error_message=?, stage='error' WHERE execution_id=?`,
+      [e.message, executionId]);
+    res.status(500).json({ error: e.message, executionId });
   }
 });
 
-// GET /activity/:user — execution history from local DB
 app.get('/activity/:user', (req, res) => {
-  db.all(`SELECT * FROM executions WHERE user_address=? ORDER BY timestamp DESC LIMIT 20`,
-    [req.params.user], (err, rows) => {
+  db.all(
+    `SELECT * FROM executions WHERE user_address=? ORDER BY timestamp DESC LIMIT 20`,
+    [req.params.user],
+    (err, rows) => {
       if (err) return res.status(500).json({ error: err.message });
       res.json(rows || []);
-    });
+    }
+  );
 });
 
 app.listen(PORT, () => {
-  console.log(`[Rhythm Backend] Running on :${PORT}`);
+  console.log(`[Rhythm Backend] :${PORT} | Flow EVM Testnet (Chain 545)`);
   console.log(`[Contracts] RuleEngine       → ${ADDRESSES.RuleEngine}`);
   console.log(`[Contracts] VaultLedger      → ${ADDRESSES.VaultLedger}`);
   console.log(`[Contracts] TreasuryManager  → ${ADDRESSES.TreasuryManager}`);
   console.log(`[Contracts] ExecutionEngine  → ${ADDRESSES.ExecutionEngine}`);
   console.log(`[Contracts] AutoController   → ${ADDRESSES.AutomationController}`);
+  console.log(`[Relayer]   ${wallet ? wallet.address : 'NOT CONFIGURED (read-only mode)'}`);
 });

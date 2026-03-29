@@ -23,9 +23,9 @@ async function main() {
   await vaultLedger.waitForDeployment();
   console.log("VaultLedger deployed to:", await vaultLedger.getAddress());
 
-  // 3. TreasuryManager (USDC Custodian)
+  // 3. TreasuryManager (Native FLOW Custodian — no USDC)
   const TreasuryManager = await ethers.getContractFactory("TreasuryManager");
-  const treasuryManager = await TreasuryManager.deploy(deployer.address, deployer.address); 
+  const treasuryManager = await TreasuryManager.deploy(deployer.address); // executionEngine placeholder
   await treasuryManager.waitForDeployment();
   console.log("TreasuryManager deployed to:", await treasuryManager.getAddress());
 
