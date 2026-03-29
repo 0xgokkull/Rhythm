@@ -1,7 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import { Outfit } from "next/font/google";
 import "./globals.css";
-import BottomNav from "@/components/BottomNav";
+import Sidebar from "@/components/Sidebar";
+import TopHeader from "@/components/TopHeader";
 
 const outfit = Outfit({
   subsets: ["latin"],
@@ -10,22 +11,14 @@ const outfit = Outfit({
 });
 
 export const metadata: Metadata = {
-  title: "Rhythm — Salary Autopilot on Flow",
-  description: "Automate your financial flow. Savings, bills, and spending—automatically.",
-  manifest: "/manifest.json",
-  appleWebApp: {
-    capable: true,
-    statusBarStyle: "default",
-    title: "Rhythm",
-  },
+  title: "Rhythm — Dynamic Salary Autopilot",
+  description: "Automate your financial flow with a wide-screen, premium dashboard.",
 };
 
 export const viewport: Viewport = {
-  themeColor: "#050505",
+  themeColor: "#4f46e5",
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
 };
 
 export default function RootLayout({
@@ -35,11 +28,21 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={outfit.className}>
-        <main className="min-h-screen bg-black text-white relative">
-          {children}
-          <BottomNav />
-        </main>
+      <body className={`${outfit.variable} font-outfit antialiased`}>
+        <div className="flex min-h-screen bg-slate-50">
+          {/* Sidebar - Fixed on Desktop */}
+          <Sidebar />
+          
+          {/* Main Content Area */}
+          <div className="flex-1 flex flex-col min-w-0">
+            <TopHeader />
+            <main className="flex-1 overflow-y-auto">
+              <div className="wide-container">
+                {children}
+              </div>
+            </main>
+          </div>
+        </div>
       </body>
     </html>
   );
