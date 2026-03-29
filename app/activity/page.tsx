@@ -36,7 +36,7 @@ export default function ActivityPage() {
         animate="visible"
         className="space-y-6"
       >
-        {/* Header */}
+        {}
         <motion.header variants={itemVariants} className="flex items-center justify-between pb-5 border-b border-slate-100">
           <div>
             <h1 className="text-2xl font-black text-slate-900 tracking-tight mb-0.5">System Timeline</h1>
@@ -52,7 +52,7 @@ export default function ActivityPage() {
           </button>
         </motion.header>
 
-        {/* Reliability Stats */}
+        {}
         <motion.div variants={itemVariants} className="grid grid-cols-4 gap-4">
           <StatCard label="Total Runs" value={sim.totalAutomated.toString()} />
           <StatCard label="Success Rate" value={`${sim.successRate}%`} />
@@ -60,7 +60,7 @@ export default function ActivityPage() {
           <StatCard label="System Status" value={sim.status === 'idle' || sim.status === 'success' ? 'Online' : 'Processing'} isStatus />
         </motion.div>
 
-        {/* Full Timeline */}
+        {}
         <motion.div variants={itemVariants} className="card-web p-6">
           <h3 className="text-sm font-bold text-slate-900 mb-5">Execution Log</h3>
           
@@ -78,7 +78,7 @@ export default function ActivityPage() {
           )}
         </motion.div>
 
-        {/* Flow Attribution */}
+        {}
         <motion.div variants={itemVariants} className="flex items-center justify-center gap-3 py-4">
           <Zap className="w-3.5 h-3.5 text-primary fill-current" />
           <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">
@@ -121,7 +121,7 @@ function TimelineRow({ event, isLast, index }: { event: any; isLast: boolean; in
       transition={{ delay: index * 0.05 }}
       className="flex gap-4 group"
     >
-      {/* Vertical timeline */}
+      {}
       <div className="flex flex-col items-center w-8 shrink-0">
         <div className={`w-8 h-8 rounded-lg ${cfg.bg} flex items-center justify-center shrink-0 z-10`}>
           <Icon className={`w-4 h-4 ${cfg.text} ${event.status === 'processing' ? 'animate-spin' : ''}`} />
@@ -129,7 +129,7 @@ function TimelineRow({ event, isLast, index }: { event: any; isLast: boolean; in
         {!isLast && <div className="w-px flex-1 bg-slate-100 -mt-0.5" />}
       </div>
       
-      {/* Content */}
+      {}
       <div className={`pb-5 flex-1 min-w-0`}>
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0">

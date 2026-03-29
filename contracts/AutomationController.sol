@@ -1,14 +1,9 @@
-// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
 interface IExecutionEngine {
     function executeAutoSplit(address user, uint256 amount) external;
 }
 
-/**
- * @title AutomationController
- * @dev System brain: idempotency, stateful retry with backoff, circuit breaker.
- */
 contract AutomationController {
     enum Status { Idle, Processing, Failed, Retrying, Success }
 
@@ -16,12 +11,11 @@ contract AutomationController {
         uint8   retryCount;
         Status  status;
         uint256 lastAttempt;
-        uint256 nextRetryTime;   // enforced delay before next retry
-        bytes32 executionId;     // idempotency key
+        uint256 nextRetryTime;
+        bytes32 executionId;
     }
 
     mapping(address => ExecutionState) public userExecutionStates;
-    // idempotency: reject duplicate execution IDs
     mapping(bytes32 => bool) public usedExecutionIds;
 
     address public executionEngine;
@@ -29,8 +23,8 @@ contract AutomationController {
     bool    public systemPaused;
 
     uint8   public constant MAX_RETRIES  = 3;
-    uint256 public constant BASE_DELAY   = 30;   // 30s base backoff
-    uint256 public constant BACKOFF_MULT = 2;    // exponential: 30s, 60s, 120s
+    uint256 public constant BASE_DELAY   = 30;
+    uint256 public constant BACKOFF_MULT = 2;
 
     modifier onlyRelayer() {
         require(msg.sender == relayer, "Only relayer");
@@ -57,23 +51,18 @@ contract AutomationController {
         executionEngine = _executionEngine;
     }
 
-    /**
-     * @dev Entry point. Idempotency key prevents double-execution.
-     */
+    
     function triggerExecution(
         address _user,
         uint256 _amount,
         bytes32 _executionId
     ) external onlyRelayer whenNotPaused {
-        // Idempotency guard
         require(!usedExecutionIds[_executionId], "Duplicate execution ID");
 
         ExecutionState storage state = userExecutionStates[_user];
 
-        // Don't allow new execution while one is in progress
         require(state.status != Status.Processing, "Execution in progress");
 
-        // Enforce retry delay if retrying
         if (state.status == Status.Retrying) {
             require(block.timestamp >= state.nextRetryTime, "Retry delay not elapsed");
         }
@@ -103,7 +92,6 @@ contract AutomationController {
         if (state.retryCount < MAX_RETRIES) {
             state.retryCount += 1;
             state.status = Status.Retrying;
-            // Exponential backoff: 30s → 60s → 120s
             uint256 delay = BASE_DELAY * (BACKOFF_MULT ** (state.retryCount - 1));
             state.nextRetryTime = block.timestamp + delay;
             emit RetryScheduled(_user, state.retryCount, state.nextRetryTime);

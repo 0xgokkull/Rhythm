@@ -38,7 +38,7 @@ export default function VaultPage() {
         animate="visible"
         className="space-y-6"
       >
-        {/* Header */}
+        {}
         <motion.header variants={itemVariants} className="flex items-center justify-between pb-5 border-b border-slate-100">
           <div>
             <h1 className="text-2xl font-black text-slate-900 tracking-tight mb-0.5">Your Vaults</h1>
@@ -56,7 +56,7 @@ export default function VaultPage() {
           </div>
         </motion.header>
 
-        {/* Total Balance — % focus, FLOW secondary */}
+        {}
         <motion.div variants={itemVariants} className="card-web p-6 grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
           <div>
             <p className="text-[12px] text-slate-500 font-bold uppercase tracking-widest mb-1">Portfolio Allocation</p>
@@ -97,7 +97,7 @@ export default function VaultPage() {
           </div>
         </motion.div>
 
-        {/* Vault Cards — behavior first */}
+        {}
         <motion.div variants={containerVariants} className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <VaultDetailCard 
             variants={itemVariants}
@@ -144,7 +144,7 @@ export default function VaultPage() {
         </motion.div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* System Resilience Indicator */}
+          {}
           <motion.div variants={itemVariants} className="card-web p-6 flex flex-col justify-between">
             <div>
               <div className="flex items-center gap-2 mb-4">
@@ -162,7 +162,7 @@ export default function VaultPage() {
             </div>
           </motion.div>
 
-          {/* Recent Vault Activity */}
+          {}
           <motion.div variants={itemVariants} className="card-web p-6">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-sm font-black text-slate-900 tracking-tight uppercase">On-Chain Activity</h3>
@@ -189,7 +189,7 @@ export default function VaultPage() {
           </motion.div>
         </div>
 
-        {/* Legend */}
+        {}
         <motion.div variants={itemVariants} className="flex items-center justify-center gap-6 py-6 border-t border-slate-50">
           <LegendItem icon={Zap} label="Scheduled execution" color="text-primary" />
           <LegendItem icon={Shield} label="Non-custodial vaults" color="text-emerald-600" />

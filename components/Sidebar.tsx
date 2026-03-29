@@ -30,7 +30,7 @@ export default function Sidebar({ isCollapsed, setIsCollapsed }: any) {
         isCollapsed ? 'w-[80px]' : 'w-[280px]'
       }`}
     >
-      {/* Logo */}
+      {}
       <div className={`h-20 flex items-center shrink-0 border-b border-slate-100 transition-all duration-500 ${isCollapsed ? 'justify-center px-0' : 'px-6'}`}>
         <Link href="/dashboard" className="flex items-center gap-3 group">
           <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center text-white shrink-0 group-hover:scale-105 transition-transform shadow-lg shadow-primary/10">
@@ -49,7 +49,7 @@ export default function Sidebar({ isCollapsed, setIsCollapsed }: any) {
         </Link>
       </div>
 
-      {/* Navigation */}
+      {}
       <nav className={`flex-1 py-4 space-y-1 ${isCollapsed ? 'px-2' : 'px-3'}`}>
         {menuItems.map((item) => {
           const isActive = pathname === item.href;
@@ -71,7 +71,7 @@ export default function Sidebar({ isCollapsed, setIsCollapsed }: any) {
                   {item.label}
                 </span>
               )}
-              {/* Tooltip on collapsed */}
+              {}
               {isCollapsed && (
                 <div className="absolute left-full ml-2 px-2.5 py-1 bg-slate-900 text-white text-xs font-bold rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap z-50">
                   {item.label}
@@ -82,7 +82,7 @@ export default function Sidebar({ isCollapsed, setIsCollapsed }: any) {
         })}
       </nav>
 
-      {/* Collapse Toggle */}
+      {}
       <div className={`shrink-0 border-t border-slate-100 ${isCollapsed ? 'p-3' : 'p-4'}`}>
         <button 
           onClick={() => setIsCollapsed(!isCollapsed)}

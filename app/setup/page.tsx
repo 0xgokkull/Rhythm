@@ -68,7 +68,7 @@ export default function SetupPage() {
         animate="visible"
         className="space-y-6"
       >
-        {/* Header */}
+        {}
         <motion.header variants={itemVariants} className="flex items-center justify-between pb-5 border-b border-slate-100">
           <div>
             <h1 className="text-2xl font-black text-slate-900 tracking-tight mb-0.5">Configure Autopilot</h1>
@@ -76,13 +76,13 @@ export default function SetupPage() {
           </div>
         </motion.header>
 
-        {/* Two-column layout */}
+        {}
         <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
 
-          {/* LEFT COLUMN — Config (7 cols) */}
+          {}
           <div className="xl:col-span-7 space-y-5">
 
-            {/* Deposit Input */}
+            {}
             <motion.div variants={itemVariants} className="card-web p-6">
               <div className="flex items-center justify-between mb-3">
                 <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">Test Deposit Amount</label>
@@ -101,7 +101,7 @@ export default function SetupPage() {
               </div>
             </motion.div>
 
-            {/* Presets */}
+            {}
             <motion.div variants={itemVariants} className="space-y-3">
               <div className="flex items-center justify-between px-1">
                 <h3 className="text-sm font-bold text-slate-900">Choose a Strategy</h3>
@@ -137,7 +137,7 @@ export default function SetupPage() {
               </div>
             </motion.div>
 
-            {/* Advanced Sliders */}
+            {}
             {showAdvanced && (
               <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="space-y-3">
                 <SliderRow label="Savings" icon={<PiggyBank className="w-4 h-4" />} value={savings} onChange={(v: number) => { if (v + bills <= 100) setSavings(v); }} />
@@ -152,7 +152,7 @@ export default function SetupPage() {
               </motion.div>
             )}
 
-            {/* Save */}
+            {}
             <motion.div variants={itemVariants}>
               <button 
                 onClick={handleSave}
@@ -165,10 +165,10 @@ export default function SetupPage() {
             </motion.div>
           </div>
 
-          {/* RIGHT COLUMN — Preview (5 cols) */}
+          {}
           <div className="xl:col-span-5 space-y-5 xl:sticky xl:top-8">
 
-            {/* Outcome Preview */}
+            {}
             {numDeposit > 0 && (
               <motion.div variants={itemVariants} className="p-6 bg-primary text-white rounded-3xl shadow-lg shadow-primary/20">
                 <h3 className="text-xs font-bold uppercase tracking-widest text-white/60 mb-5">
@@ -195,7 +195,7 @@ export default function SetupPage() {
               </motion.div>
             )}
 
-            {/* How it works */}
+            {}
             <motion.div variants={itemVariants} className="card-web p-6">
               <h4 className="text-sm font-bold text-slate-900 mb-4">How Autopilot Works</h4>
               <div className="space-y-3">

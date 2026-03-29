@@ -46,13 +46,13 @@ export default function LandingPage() {
   return (
     <div className="min-h-screen bg-white overflow-x-hidden selection:bg-primary/10 selection:text-primary">
       
-      {/* Background Accents */}
+      {}
       <div className="fixed inset-0 pointer-events-none">
         <div className="absolute top-[10%] left-[5%] w-[500px] h-[500px] bg-emerald-50 rounded-full blur-[120px] opacity-60" />
         <div className="absolute bottom-[10%] right-[5%] w-[400px] h-[400px] bg-secondary/10 rounded-full blur-[120px] opacity-40" />
       </div>
 
-      {/* Hero Section */}
+      {}
       <main className="relative z-10 pt-16 pb-32">
         <div className="wide-container">
           <motion.div 
@@ -61,25 +61,25 @@ export default function LandingPage() {
             animate="visible"
             className="max-w-4xl mx-auto text-center"
           >
-            {/* Badge */}
+            {}
             <motion.div variants={itemVariants} className="inline-flex items-center gap-2 px-3 py-1 bg-primary/5 border border-primary/10 rounded-full mb-8">
               <span className="w-2 h-2 bg-primary rounded-full animate-pulse" />
               <span className="text-[12px] font-black text-primary uppercase tracking-widest">Built on Flow Testnet</span>
             </motion.div>
 
-            {/* Title */}
+            {}
             <motion.h1 variants={itemVariants} className="text-6xl md:text-8xl font-black text-slate-900 tracking-tighter leading-[0.9] mb-8">
               Money on <br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-emerald-600">Autopilot.</span>
             </motion.h1>
 
-            {/* Description */}
+            {}
             <motion.p variants={itemVariants} className="text-xl md:text-2xl text-slate-500 font-medium max-w-2xl mx-auto mb-12 leading-relaxed">
               The first high-fidelity simulation of institutional-grade DeFi automation. 
               Setup your split rules, deposit FLOW, and watch the engine handle the rest.
             </motion.p>
 
-            {/* CTA Area */}
+            {}
             <motion.div variants={itemVariants} className="flex flex-col items-center gap-6">
               <button
                 onClick={handleConnect}
@@ -117,7 +117,7 @@ export default function LandingPage() {
             </motion.div>
           </motion.div>
 
-          {/* Feature Grid */}
+          {}
           <motion.div 
             variants={containerVariants}
             initial="hidden"
@@ -144,7 +144,7 @@ export default function LandingPage() {
         </div>
       </main>
 
-      {/* Footer */}
+      {}
       <footer className="py-12 border-t border-slate-50">
         <div className="wide-container flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="flex items-center gap-2 text-slate-400 text-sm font-black uppercase tracking-widest">

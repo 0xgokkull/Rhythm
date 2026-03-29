@@ -44,7 +44,7 @@ export default function DashboardPage() {
         animate="visible"
         className="space-y-6"
       >
-        {/* ══════════════ AUTOPILOT HERO ══════════════ */}
+        {}
         <motion.div variants={itemVariants}>
           <AutopilotHero 
             status={sim.status}
@@ -58,7 +58,7 @@ export default function DashboardPage() {
           />
         </motion.div>
 
-        {/* ══════════════ AUTOMATION METRICS (behavior, not balance) ══════════════ */}
+        {}
         <motion.div variants={containerVariants} className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <motion.div variants={itemVariants} className="card-web p-5 flex items-center justify-between group">
             <div>
@@ -96,10 +96,10 @@ export default function DashboardPage() {
           </motion.div>
         </motion.div>
 
-        {/* ══════════════ VAULTS + ACTIVITY ══════════════ */}
+        {}
         <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
           
-          {/* Vault Balances — % primary, FLOW secondary */}
+          {}
           <motion.div variants={itemVariants} className="xl:col-span-5 space-y-4">
             <div className="flex items-center justify-between px-1">
               <h3 className="text-lg font-bold text-slate-900 tracking-tight">Fund Allocation</h3>
@@ -143,14 +143,14 @@ export default function DashboardPage() {
               iconBg="bg-slate-50"
             />
 
-            {/* Total */}
+            {}
             <div className="px-5 py-3 bg-slate-50 rounded-xl border border-slate-100 flex items-center justify-between">
               <span className="text-sm text-slate-500 font-bold">Total Funds</span>
               <span className="text-base font-black text-slate-900">{totalFunds.toFixed(1)} FLOW <span className="text-[11px] text-slate-400 font-bold">(Testnet)</span></span>
             </div>
           </motion.div>
 
-          {/* System Activity Timeline */}
+          {}
           <motion.div variants={itemVariants} className="xl:col-span-7">
             <div className="card-web p-6">
               <div className="flex items-center justify-between mb-5">
@@ -179,7 +179,6 @@ export default function DashboardPage() {
   );
 }
 
-/* ═══ AUTOPILOT HERO ═══ */
 function AutopilotHero({ status, phase, lastRun, lastAmount, nextRun, retryCount, isPaused, onSimulate }: {
   status: SystemStatus; phase: EnginePhase; lastRun: string | null; lastAmount: string | null;
   nextRun: string; retryCount: number; isPaused: boolean; onSimulate: () => void;
@@ -209,7 +208,7 @@ function AutopilotHero({ status, phase, lastRun, lastAmount, nextRun, retryCount
 
   return (
     <div className={`card-web p-6 border ${cfg.bg} transition-all duration-500 relative overflow-hidden group`}>
-      {/* Dynamic Flow Execution Ribbon */}
+      {}
       <AnimatePresence>
         {status === 'success' && (
           <motion.div 
@@ -223,7 +222,7 @@ function AutopilotHero({ status, phase, lastRun, lastAmount, nextRun, retryCount
           </motion.div>
         )}
       </AnimatePresence>
-      {/* Background Accent for Active Phase */}
+      {}
       {phase !== 'IDLE' && (
         <motion.div 
           initial={{ x: '-100%' }}
@@ -292,7 +291,6 @@ function AutopilotHero({ status, phase, lastRun, lastAmount, nextRun, retryCount
   );
 }
 
-/* ═══ VAULT CARD — % primary, FLOW secondary ═══ */
 function VaultCard({ icon: Icon, name, purpose, balance, pct, iconColor, iconBg, lastActivity, lastUpdate }: any) {
   return (
     <div className="card-web p-5 flex items-center justify-between group cursor-pointer hover:border-primary/20 transition-colors">
@@ -317,7 +315,6 @@ function VaultCard({ icon: Icon, name, purpose, balance, pct, iconColor, iconBg,
   );
 }
 
-/* ═══ TIMELINE ITEM ═══ */
 function TimelineItem({ event, isLast }: { event: any; isLast: boolean }) {
   const colors: Record<string, { dot: string; line: string }> = {
     success: { dot: 'bg-emerald-500', line: 'bg-emerald-200' },

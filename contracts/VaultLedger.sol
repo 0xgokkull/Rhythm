@@ -1,10 +1,5 @@
-// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-/**
- * @title VaultLedger
- * @dev Authoritative accounting layer. Enforces treasury balance consistency.
- */
 contract VaultLedger {
     struct Vault {
         uint256 savings;
@@ -57,10 +52,7 @@ contract VaultLedger {
         return (v.savings, v.bills, v.spend, v.lastUpdated);
     }
 
-    /**
-     * @dev Total tracked balance for a user across all vaults.
-     * Used by ExecutionEngine to enforce treasury >= vault total.
-     */
+    
     function getTotalBalance(address _user) external view returns (uint256) {
         Vault memory v = accountVaults[_user];
         return v.savings + v.bills + v.spend;

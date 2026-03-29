@@ -41,7 +41,7 @@ export default function SettingsPage() {
         animate="visible"
         className="space-y-6"
       >
-        {/* Header */}
+        {}
         <motion.header variants={itemVariants} className="flex items-center justify-between pb-5 border-b border-slate-100">
           <div>
             <h1 className="text-2xl font-black text-slate-900 tracking-tight mb-0.5">Settings</h1>
@@ -53,12 +53,12 @@ export default function SettingsPage() {
           </button>
         </motion.header>
 
-        {/* Two-column layout */}
+        {}
         <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
 
-          {/* LEFT — Profile & Account (5 cols) */}
+          {}
           <div className="xl:col-span-5 space-y-5">
-            {/* Profile Card */}
+            {}
             <motion.div variants={itemVariants} className="card-web p-6">
               <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4">Account</h3>
               <div className="flex items-center gap-4 mb-5">
@@ -82,7 +82,7 @@ export default function SettingsPage() {
               </div>
             </motion.div>
 
-            {/* Wallet */}
+            {}
             <motion.div variants={itemVariants} className="card-web p-5 flex items-center justify-between group cursor-pointer hover:border-primary/20 transition-all">
               <div className="flex items-center gap-4">
                 <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
@@ -96,7 +96,7 @@ export default function SettingsPage() {
               <ExternalLink className="w-4 h-4 text-slate-300 group-hover:text-primary transition-colors" />
             </motion.div>
 
-            {/* Help & Support */}
+            {}
             <motion.div variants={itemVariants} className="card-web p-6">
               <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4">Support</h3>
               <div className="space-y-1">
@@ -106,9 +106,9 @@ export default function SettingsPage() {
             </motion.div>
           </div>
 
-          {/* RIGHT — Preferences (7 cols) */}
+          {}
           <div className="xl:col-span-7 space-y-5">
-            {/* Preferences list */}
+            {}
             <motion.div variants={itemVariants} className="card-web overflow-hidden">
               <div className="px-6 py-4 border-b border-slate-50">
                 <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest">Preferences</h3>
@@ -120,7 +120,7 @@ export default function SettingsPage() {
               </div>
             </motion.div>
 
-            {/* Autopilot Governance */}
+            {}
             <motion.div variants={itemVariants} className="card-web overflow-hidden border-primary/20 bg-primary/[0.02]">
               <div className="px-6 py-4 border-b border-primary/10 flex items-center justify-between">
                 <h3 className="text-xs font-black text-primary uppercase tracking-widest">Autopilot Governance</h3>
@@ -163,7 +163,7 @@ export default function SettingsPage() {
                   </button>
                 </div>
 
-                {/* Retry Depth */}
+                {}
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <div>
@@ -187,7 +187,7 @@ export default function SettingsPage() {
                   </div>
                 </div>
 
-                {/* Simulation Speed */}
+                {}
                 <div className="space-y-3 pt-6 border-t border-slate-100">
                   <div className="flex items-center justify-between">
                     <div>
@@ -209,7 +209,7 @@ export default function SettingsPage() {
                   />
                 </div>
 
-                {/* Execution Frequency */}
+                {}
                 <div className="space-y-3 pt-6 border-t border-slate-100">
                   <h5 className="text-base font-black text-slate-900 tracking-tight">Execution Frequency</h5>
                   <div className="grid grid-cols-3 gap-2">
@@ -231,7 +231,7 @@ export default function SettingsPage() {
               </div>
             </motion.div>
 
-            {/* Danger zone */}
+            {}
             <motion.div variants={itemVariants} className="card-web overflow-hidden border-red-100">
               <div className="px-6 py-4 border-b border-red-50">
                 <h3 className="text-xs font-bold text-red-400 uppercase tracking-widest">Danger Zone</h3>
@@ -249,7 +249,7 @@ export default function SettingsPage() {
           </div>
         </div>
 
-        {/* Footer */}
+        {}
         <motion.div variants={itemVariants} className="flex items-center justify-center gap-2 py-3">
           <Zap className="w-3 h-3 text-primary fill-current" />
           <span className="text-[12px] text-slate-400 font-black uppercase tracking-widest">

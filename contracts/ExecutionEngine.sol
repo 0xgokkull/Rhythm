@@ -1,4 +1,3 @@
-// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
 interface IRuleEngine {
@@ -15,10 +14,6 @@ interface ITreasuryManager {
     function userDeposits(address user) external view returns (uint256);
 }
 
-/**
- * @title ExecutionEngine
- * @dev Pure stateless computation. Splits native FLOW by rule percentages.
- */
 contract ExecutionEngine {
     IRuleEngine       public ruleEngine;
     IVaultLedger      public vaultLedger;
@@ -42,19 +37,15 @@ contract ExecutionEngine {
     function executeAutoSplit(address _user, uint256 _amount) external onlyController {
         require(_amount > 0, "Amount must be > 0");
 
-        // Invariant: rule percentages must be valid
         (uint8 sPct, uint8 bPct, uint8 spPct) = ruleEngine.getRule(_user);
         require(uint256(sPct) + bPct + spPct <= 100, "Invalid rule: exceeds 100");
 
-        // Invariant: treasury must hold sufficient funds
         require(treasuryManager.userDeposits(_user) >= _amount, "Insufficient treasury balance");
 
-        // Stateless calculation
         uint256 sAmt  = (_amount * sPct)  / 100;
         uint256 bAmt  = (_amount * bPct)  / 100;
-        uint256 spAmt = _amount - sAmt - bAmt; // precision-safe remainder
+        uint256 spAmt = _amount - sAmt - bAmt;
 
-        // Update accounting layers
         vaultLedger.updateBalances(_user, sAmt, bAmt, spAmt);
         treasuryManager.distributeFunds(_user, sAmt, bAmt, spAmt);
 

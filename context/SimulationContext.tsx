@@ -138,7 +138,6 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
     const spendAmt = parseFloat((depositAmount - savingsAmt - billsAmt).toFixed(1));
     const txId = `0x${Math.random().toString(16).slice(2, 10)}...${Math.random().toString(16).slice(2, 6)}`;
 
-    // Phase 1: DETECTION
     setCurrentPhase('DETECTION');
     setStatus('detecting');
     setRetryCount(0);
@@ -149,7 +148,6 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
       amount: `${depositAmount} FLOW`,
     });
 
-    // Phase 2: VALIDATION
     setTimeout(() => {
       setCurrentPhase('VALIDATION');
       addEvent({
@@ -159,7 +157,6 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
       });
     }, baseSpeed * 2);
 
-    // Phase 3: ALLOCATION (Initial Attempt)
     setTimeout(() => {
       setCurrentPhase('ALLOCATION');
       setStatus('splitting');
@@ -171,7 +168,6 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
       });
     }, baseSpeed * 4.5);
 
-    // Phase 4: Intentional Friction (RETRY_LOGIC)
     setTimeout(() => {
       setCurrentPhase('RETRY_LOGIC');
       setStatus('failed');
@@ -182,7 +178,6 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
       });
     }, baseSpeed * 7);
 
-    // Phase 5: RETRY 1
     setTimeout(() => {
       setStatus('retrying');
       setRetryCount(1);
@@ -194,7 +189,6 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
       });
     }, baseSpeed * 9);
 
-    // Phase 6: RETRY 2 (Friction Depth)
     setTimeout(() => {
       setRetryCount(2);
       addEvent({
@@ -205,7 +199,6 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
       });
     }, baseSpeed * 11);
 
-    // Phase 7: FINALIZING
     setTimeout(() => {
       setCurrentPhase('FINALIZING');
       setStatus('success');

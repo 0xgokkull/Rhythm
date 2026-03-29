@@ -2,22 +2,16 @@ const { ethers } = require('ethers');
 const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 
-/**
- * @title EventIndexer
- * @dev Service to monitor contract events and maintain a normalized DB for frontend visibility.
- * Responsibility: Listen to contract logs, sync state, and provide an API for observability.
- */
 class EventIndexer {
     constructor(rpcUrl, contracts) {
         this.provider = new ethers.JsonRpcProvider(rpcUrl);
-        this.contracts = contracts; // Map of { address, abi, name }
+        this.contracts = contracts;
         this.db = new sqlite3.Database(path.join(__dirname, '../data/rhythm.sqlite'));
         this.initDb();
     }
 
     async initDb() {
         this.db.serialize(() => {
-            // Master users and their rules
             this.db.run(`CREATE TABLE IF NOT EXISTS users (
                 address TEXT PRIMARY KEY,
                 savings_pct INTEGER,
@@ -25,7 +19,6 @@ class EventIndexer {
                 last_updated INTEGER
             )`);
 
-            // Executions (The history of autopilot splits)
             this.db.run(`CREATE TABLE IF NOT EXISTS executions (
                 tx_hash TEXT PRIMARY KEY,
                 user_address TEXT,
@@ -37,7 +30,6 @@ class EventIndexer {
                 split_bills TEXT
             )`);
 
-            // Vaults (Authoritative current state)
             this.db.run(`CREATE TABLE IF NOT EXISTS vaults (
                 user_address TEXT PRIMARY KEY,
                 savings TEXT,
@@ -50,13 +42,10 @@ class EventIndexer {
         });
     }
 
-    /**
-     * @dev Start monitoring specific contract events.
-     */
+    
     start() {
         console.log('[Indexer] Monitoring Flow EVM events...');
         
-        // Example: RuleEngine - RuleUpdated
         const ruleContract = new ethers.Contract(
             this.contracts.RuleEngine.address, 
             this.contracts.RuleEngine.abi, 
@@ -68,7 +57,6 @@ class EventIndexer {
                 VALUES (?, ?, ?, ?)`, [user, savings, bills, Date.now()]);
         });
 
-        // Example: VaultLedger - VaultUpdated
         const ledgerContract = new ethers.Contract(
             this.contracts.VaultLedger.address, 
             this.contracts.VaultLedger.abi, 
@@ -80,7 +68,6 @@ class EventIndexer {
                 VALUES (?, ?, ?, ?, ?)`, [user, savings.toString(), bills.toString(), spend.toString(), Date.now()]);
         });
 
-        // Example: AutomationController - ExecutionCompleted
         const controllerContract = new ethers.Contract(
             this.contracts.AutomationController.address, 
             this.contracts.AutomationController.abi, 
@@ -88,7 +75,6 @@ class EventIndexer {
         );
         controllerContract.on('ExecutionCompleted', (user) => {
             console.log(`[Indexer] Execution Cycle Success for ${user}`);
-            // Update execution record locally from block data if desired.
         });
     }
 }

@@ -13,7 +13,6 @@ const RPC  = process.env.RPC_URL || 'https://testnet.evm.nodes.onflow.org';
 app.use(express.json());
 app.use(cors());
 
-// ── Deployed Contract Addresses (Flow EVM Testnet, Chain 545) ────────────────
 const ADDRESSES = {
   RuleEngine:           '0x02a0Fc6088A441A6CE86Cf7d09c2a31245e67619',
   VaultLedger:          '0xb96BFf5fE3ce64D29cAAcC253E2c90392be88085',
@@ -22,7 +21,6 @@ const ADDRESSES = {
   AutomationController: '0xD93b31cc5B6E995744D0D3c7d09f5c2E340E3b10',
 };
 
-// ── ABIs ─────────────────────────────────────────────────────────────────────
 const RULE_ENGINE_ABI = [
   'function setRule(uint8 _savings, uint8 _bills) external',
   'function getRule(address _user) external view returns (uint8, uint8, uint8)',
@@ -42,7 +40,6 @@ const AUTOMATION_ABI = [
   'event RetryScheduled(address indexed user, uint8 attempt, uint256 nextRetryTime)',
 ];
 
-// ── Provider + Wallet ────────────────────────────────────────────────────────
 const provider   = new ethers.JsonRpcProvider(RPC);
 const wallet     = process.env.RELAYER_PRIVATE_KEY
   ? new ethers.Wallet(process.env.RELAYER_PRIVATE_KEY, provider)
@@ -52,7 +49,6 @@ const ruleEngine  = new ethers.Contract(ADDRESSES.RuleEngine,   RULE_ENGINE_ABI,
 const vaultLedger = new ethers.Contract(ADDRESSES.VaultLedger,  VAULT_LEDGER_ABI, provider);
 const controller  = new ethers.Contract(ADDRESSES.AutomationController, AUTOMATION_ABI, wallet || provider);
 
-// ── SQLite (Upgraded Schema) ──────────────────────────────────────────────────
 const db = new sqlite3.Database(path.join(__dirname, 'data/rhythm.sqlite'));
 db.run(`CREATE TABLE IF NOT EXISTS executions (
   tx_hash       TEXT PRIMARY KEY,
@@ -66,7 +62,6 @@ db.run(`CREATE TABLE IF NOT EXISTS executions (
   timestamp     INTEGER
 )`);
 
-// ── Rate Limiting (per-user cooldown: 30s) ───────────────────────────────────
 const lastRequest = {};
 function rateLimit(req, res, next) {
   const user = req.body?.user || req.params?.user;
@@ -79,8 +74,6 @@ function rateLimit(req, res, next) {
   lastRequest[user] = now;
   next();
 }
-
-// ── Endpoints ─────────────────────────────────────────────────────────────────
 
 app.get('/health', async (_req, res) => {
   try {
@@ -123,20 +116,17 @@ app.get('/vault/:user', async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// POST /execution/trigger — idempotent, rate-limited
 app.post('/execution/trigger', rateLimit, async (req, res) => {
   if (!wallet) return res.status(400).json({ error: 'No relayer key configured' });
   const { user, amount } = req.body;
   if (!user || !amount) return res.status(400).json({ error: 'user and amount required' });
 
-  // Generate deterministic execution ID (idempotency key)
   const executionId = '0x' + crypto.createHash('sha256')
     .update(`${user}-${amount}-${Date.now()}`)
     .digest('hex');
 
   const parsed = ethers.parseEther(String(amount));
 
-  // Log as pending before broadcast
   db.run(`INSERT OR IGNORE INTO executions VALUES (?,?,?,?,?,?,?,?,?)`,
     [null, executionId, user, String(amount), 'pending', 0, null, 'trigger', Date.now()]);
 
