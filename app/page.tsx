@@ -18,66 +18,91 @@ export default function AuthPage() {
     }, 2000);
   };
 
+  const containerVariants: any = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.15,
+        delayChildren: 0.2
+      }
+    }
+  };
+
+  const itemVariants: any = {
+    hidden: { opacity: 0, y: 30 },
+    visible: { 
+      opacity: 1, 
+      y: 0,
+      transition: { duration: 0.8, ease: [0.22, 1, 0.36, 1] }
+    }
+  };
+
   return (
-    <div className="min-h-[calc(100vh-160px)] flex flex-col items-center justify-center py-20">
+    <div className="min-h-[calc(100vh-160px)] flex flex-col items-center justify-center py-20 relative overflow-hidden">
       <AnimatePresence mode="wait">
         {step === 'auth' && (
           <motion.div
             key="auth"
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-            className="w-full max-w-6xl grid grid-cols-1 lg:grid-cols-2 gap-20 items-center px-6"
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+            exit={{ opacity: 0, scale: 0.95 }}
+            className="w-full max-w-7xl grid grid-cols-1 lg:grid-cols-2 gap-24 items-center px-10 relative z-10"
           >
             {/* Left Side: Brand & Value Prop */}
-            <div className="space-y-12">
-              <div className="space-y-6">
+            <div className="space-y-16">
+              <motion.div className="space-y-8" variants={itemVariants}>
                 <motion.div 
-                  initial={{ scale: 0.8 }}
-                  animate={{ scale: 1 }}
-                  className="w-20 h-20 bg-primary rounded-3xl flex items-center justify-center text-white shadow-2xl shadow-primary/40 mb-8"
+                  whileHover={{ scale: 1.05, rotate: 5 }}
+                  className="w-24 h-24 bg-gradient-to-br from-primary to-secondary rounded-[32px] flex items-center justify-center text-white shadow-2xl shadow-primary/30 mb-12"
                 >
-                  <Zap className="w-10 h-10 fill-current" />
+                  <Zap className="w-12 h-12 fill-current" />
                 </motion.div>
-                <h1 className="text-7xl font-bold tracking-tighter text-slate-900 leading-[1.1]">
+                <h1 className="text-8xl font-black tracking-[-0.04em] text-slate-900 leading-[0.95]">
                   Your Flow, <br />
-                  <span className="text-primary">on Autopilot.</span>
+                  <span className="text-primary italic">on Autopilot.</span>
                 </h1>
-                <p className="text-2xl text-slate-500 font-light max-w-lg leading-relaxed">
+                <p className="text-2xl text-slate-500 font-medium max-w-xl leading-relaxed">
                   The ultimate financial engine for the Flow ecosystem. 
-                  Automate savings, bills, and yield in one click.
+                  Automate savings, bills, and yield with institutional precision.
                 </p>
-              </div>
+              </motion.div>
 
-              <div className="grid grid-cols-2 gap-8">
-                <FeatureMini icon={Shield} label="Non-Custodial" desc="Full asset control" />
-                <FeatureMini icon={Cpu} label="Smart Execution" desc="Auto-split protocol" />
-                <FeatureMini icon={TrendingUp} label="Yield Optimized" desc="Max capital efficiency" />
-                <FeatureMini icon={Zap} label="Instant Flow" desc="On-chain settlements" />
-              </div>
+              <motion.div 
+                className="grid grid-cols-1 md:grid-cols-2 gap-10"
+                variants={itemVariants}
+              >
+                <FeatureMini icon={Shield} label="Non-Custodial" desc="Full asset control via Secure Enclave" />
+                <FeatureMini icon={Cpu} label="Smart Execution" desc="Automated on-chain distribution" />
+                <FeatureMini icon={TrendingUp} label="Yield Optimized" desc="Maximum capital efficiency protocols" />
+                <FeatureMini icon={Zap} label="Instant Flow" desc="High-throughput net settlements" />
+              </motion.div>
             </div>
 
             {/* Right Side: Auth Card */}
-            <div className="card-web p-12 space-y-10 relative">
-              <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl -z-10" />
-              <div className="absolute bottom-0 left-0 w-64 h-64 bg-secondary/5 rounded-full blur-3xl -z-10" />
+            <motion.div 
+              variants={itemVariants}
+              className="card-web p-16 space-y-12 relative group"
+            >
+              <div className="absolute top-0 right-0 w-80 h-80 bg-primary/10 rounded-full blur-[100px] -z-10 group-hover:bg-primary/20 transition-colors duration-1000" />
+              <div className="absolute bottom-0 left-0 w-80 h-80 bg-accent/10 rounded-full blur-[100px] -z-10 group-hover:bg-accent/20 transition-colors duration-1000" />
               
               <div className="space-y-4">
-                <h2 className="text-3xl font-bold text-slate-900 tracking-tight">Access Dashboard</h2>
-                <p className="text-slate-500">Secure entry with institutional-grade auth.</p>
+                <h2 className="text-4xl font-black text-slate-900 tracking-tighter">Access Dashboard</h2>
+                <p className="text-lg text-slate-500 font-medium tracking-tight">Connect your identity to the Flow network.</p>
               </div>
 
               {/* Auth Form */}
-              <div className="space-y-8">
+              <div className="space-y-10">
                 <div className="relative group">
-                  <div className="absolute inset-y-0 left-6 flex items-center pointer-events-none">
-                    <Mail className="w-5 h-5 text-slate-400 group-focus-within:text-primary transition-colors" />
+                  <div className="absolute inset-y-0 left-8 flex items-center pointer-events-none">
+                    <Mail className="w-6 h-6 text-slate-300 group-focus-within:text-primary transition-colors" />
                   </div>
                   <input 
                     type="text" 
                     placeholder="Work Email or Phone" 
-                    className="input-web pl-16 h-16"
+                    className="input-web pl-20 h-20 text-xl"
                     value={inputValue}
                     onChange={(e) => setInputValue(e.target.value)}
                   />
@@ -86,51 +111,51 @@ export default function AuthPage() {
                 <button
                   onClick={handleNext}
                   disabled={!inputValue}
-                  className="btn-web-primary w-full h-16 group disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="btn-web-primary w-full h-20 text-xl group disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Continue to Rhythm
-                  <ArrowRight className="w-6 h-6 group-hover:translate-x-1 transition-transform" />
+                  <ArrowRight className="w-6 h-6 group-hover:translate-x-2 transition-transform duration-500" />
                 </button>
 
-                <div className="flex items-center gap-6 py-2">
+                <div className="flex items-center gap-8 py-2">
                   <div className="h-[1px] flex-1 bg-slate-100" />
-                  <span className="text-slate-400 text-xs font-bold uppercase tracking-[0.2em]">or SSO</span>
+                  <span className="text-slate-400 text-xs font-black uppercase tracking-[0.3em]">Institutional SSO</span>
                   <div className="h-[1px] flex-1 bg-slate-100" />
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <SocialBtn icon={<Terminal className="w-5 h-5 text-slate-900" />} label="Terminal" />
-                  <SocialBtn icon={<Apple className="w-5 h-5 text-slate-900" />} label="Apple" />
+                <div className="grid grid-cols-2 gap-6">
+                  <SocialBtn icon={<Terminal className="w-6 h-6 text-slate-900" />} label="Terminal" />
+                  <SocialBtn icon={<Apple className="w-6 h-6 text-slate-900" />} label="Apple" />
                 </div>
               </div>
 
-              <p className="text-center text-slate-400 text-sm leading-relaxed">
+              <p className="text-center text-slate-400 text-sm leading-relaxed font-medium">
                 By signing in, you agree to our <br />
-                <span className="text-slate-600 font-bold hover:text-primary transition-colors cursor-pointer">Terms of Service</span> and <span className="text-slate-600 font-bold hover:text-primary transition-colors cursor-pointer">Privacy Policy</span>
+                <span className="text-primary font-bold hover:underline cursor-pointer">Terms of Service</span> and <span className="text-primary font-bold hover:underline cursor-pointer">Privacy Policy</span>
               </p>
-            </div>
+            </motion.div>
           </motion.div>
         )}
 
         {step === 'loading' && (
           <motion.div
             key="loading"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0 }}
-            className="flex flex-col items-center gap-12"
+            className="flex flex-col items-center gap-16"
           >
-            <div className="relative w-24 h-24">
-              <Loader2 className="w-24 h-24 text-primary animate-spin" />
+            <div className="relative w-32 h-32">
+              <Loader2 className="w-32 h-32 text-primary animate-spin-slow stroke-[1.5]" />
               <motion.div 
-                className="absolute inset-0 bg-primary/20 blur-3xl rounded-full"
-                animate={{ scale: [1, 2, 1], opacity: [0.2, 0.4, 0.2] }}
-                transition={{ duration: 2, repeat: Infinity }}
+                className="absolute inset-0 bg-primary/30 blur-[60px] rounded-full"
+                animate={{ scale: [1, 2, 1], opacity: [0.3, 0.6, 0.3] }}
+                transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
               />
             </div>
-            <div className="text-center space-y-4">
-              <h3 className="text-4xl font-bold text-slate-900 tracking-tight">Syncing Accounts</h3>
-              <p className="text-xl text-slate-500 font-light">Decrypting secure vaults and connecting protocol nodes...</p>
+            <div className="text-center space-y-6">
+              <h3 className="text-5xl font-black text-slate-900 tracking-tighter">Syncing Accounts</h3>
+              <p className="text-2xl text-slate-400 font-light max-w-lg">Decrypting secure vaults and connecting to Flow nodes...</p>
             </div>
           </motion.div>
         )}
@@ -141,13 +166,13 @@ export default function AuthPage() {
 
 function FeatureMini({ icon: Icon, label, desc }: any) {
   return (
-    <div className="flex items-start gap-4">
-      <div className="p-3 bg-white shadow-lg shadow-slate-200/50 rounded-2xl text-primary">
-        <Icon className="w-5 h-5" />
+    <div className="flex items-start gap-6 group">
+      <div className="p-4 bg-white shadow-xl shadow-slate-100 rounded-2xl text-primary group-hover:scale-110 group-hover:bg-primary group-hover:text-white transition-all duration-500">
+        <Icon className="w-6 h-6" />
       </div>
       <div>
-        <h4 className="font-bold text-slate-900 text-sm">{label}</h4>
-        <p className="text-xs text-slate-500 font-medium leading-tight">{desc}</p>
+        <h4 className="font-extrabold text-slate-900 text-lg leading-tight mb-1">{label}</h4>
+        <p className="text-sm text-slate-500 font-medium leading-snug tracking-tight">{desc}</p>
       </div>
     </div>
   );
@@ -155,7 +180,7 @@ function FeatureMini({ icon: Icon, label, desc }: any) {
 
 function SocialBtn({ icon, label }: any) {
   return (
-    <button className="flex items-center justify-center gap-3 py-5 px-6 border border-slate-100 rounded-2xl hover:bg-slate-50 hover:border-slate-200 transition-all font-bold text-sm text-slate-900">
+    <button className="flex items-center justify-center gap-4 py-6 px-8 border-2 border-slate-50 rounded-[28px] hover:bg-white hover:border-primary/20 hover:shadow-xl transition-all duration-500 font-black text-sm text-slate-900 active:scale-95">
       {icon}
       {label}
     </button>
