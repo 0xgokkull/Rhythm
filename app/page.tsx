@@ -52,16 +52,6 @@ export default function LandingPage() {
         <div className="absolute bottom-[10%] right-[5%] w-[400px] h-[400px] bg-secondary/10 rounded-full blur-[120px] opacity-40" />
       </div>
 
-      {/* Header/Nav */}
-      <nav className="relative z-50 h-20 px-8 flex items-center justify-between pointer-events-none">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center text-white shadow-lg shadow-primary/20">
-            <Zap className="w-5 h-5 fill-current" />
-          </div>
-          <span className="text-2xl font-black tracking-tighter text-slate-900">Rhythm</span>
-        </div>
-      </nav>
-
       {/* Hero Section */}
       <main className="relative z-10 pt-16 pb-32">
         <div className="wide-container">
