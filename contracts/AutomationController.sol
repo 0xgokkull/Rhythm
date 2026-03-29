@@ -13,7 +13,10 @@ contract AutomationController {
         uint256 lastAttempt;
         uint256 nextRetryTime;
         bytes32 executionId;
+        uint256 executionIndex;
     }
+
+    mapping(address => uint256) public userExecutionCounter;
 
     mapping(address => ExecutionState) public userExecutionStates;
     mapping(bytes32 => bool) public usedExecutionIds;
@@ -36,10 +39,10 @@ contract AutomationController {
         _;
     }
 
-    event ExecutionStarted(address indexed user, uint256 amount, bytes32 executionId);
+    event ExecutionStarted(address indexed user, uint256 amount, bytes32 executionId, uint256 executionIndex);
     event ExecutionFailed(address indexed user, string reason, uint8 attempt);
     event RetryScheduled(address indexed user, uint8 attempt, uint256 nextRetryTime);
-    event ExecutionCompleted(address indexed user, bytes32 executionId);
+    event ExecutionCompleted(address indexed user, bytes32 executionId, uint256 executionIndex);
     event SystemPaused(bool state);
 
     constructor(address _relayer) {
@@ -68,17 +71,21 @@ contract AutomationController {
         }
 
         usedExecutionIds[_executionId] = true;
-        state.executionId  = _executionId;
-        state.status       = Status.Processing;
-        state.lastAttempt  = block.timestamp;
+        userExecutionCounter[_user] += 1;
+        uint256 currentIndex = userExecutionCounter[_user];
 
-        emit ExecutionStarted(_user, _amount, _executionId);
+        state.executionId    = _executionId;
+        state.executionIndex = currentIndex;
+        state.status         = Status.Processing;
+        state.lastAttempt    = block.timestamp;
+
+        emit ExecutionStarted(_user, _amount, _executionId, currentIndex);
 
         try IExecutionEngine(executionEngine).executeAutoSplit(_user, _amount) {
-            state.status     = Status.Success;
-            state.retryCount = 0;
+            state.status        = Status.Success;
+            state.retryCount    = 0;
             state.nextRetryTime = 0;
-            emit ExecutionCompleted(_user, _executionId);
+            emit ExecutionCompleted(_user, _executionId, currentIndex);
         } catch Error(string memory reason) {
             _handleFailure(_user, reason);
         } catch {
