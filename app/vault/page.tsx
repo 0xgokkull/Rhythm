@@ -1,44 +1,31 @@
 'use client';
 
-import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { 
-  Wallet, 
-  ArrowDownLeft, 
-  ArrowUpRight, 
-  Plus, 
-  History, 
-  PieChart, 
+  PiggyBank,
+  Receipt,
+  ShoppingBag,
+  Shield,
   ArrowRight,
-  ShieldCheck,
-  TrendingUp,
-  Clock,
-  ExternalLink,
-  ChevronRight
+  Zap,
+  ArrowUpRight,
+  Clock
 } from 'lucide-react';
 import PageTransition from '@/components/PageTransition';
+import { useSimulation } from '@/context/SimulationContext';
 
 export default function VaultPage() {
-  const [activeTab, setActiveTab] = useState('savings');
+  const sim = useSimulation();
+  const totalFunds = sim.vaults.savings + sim.vaults.bills + sim.vaults.spend;
 
   const containerVariants: any = {
     hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1,
-        delayChildren: 0.1
-      }
-    }
+    visible: { opacity: 1, transition: { staggerChildren: 0.08 } }
   };
 
   const itemVariants: any = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { 
-      opacity: 1, 
-      y: 0,
-      transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] }
-    }
+    hidden: { opacity: 0, y: 12 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.4, ease: [0.16, 1, 0.3, 1] } }
   };
 
   return (
@@ -47,170 +34,163 @@ export default function VaultPage() {
         variants={containerVariants}
         initial="hidden"
         animate="visible"
-        className="space-y-12"
+        className="space-y-6"
       >
-        <header className="flex items-center justify-between pb-8 border-b border-slate-50">
+        {/* Header */}
+        <motion.header variants={itemVariants} className="flex items-center justify-between pb-5 border-b border-slate-100">
           <div>
-            <h1 className="text-4xl font-black text-slate-900 tracking-tighter mb-1">Financial Vaults</h1>
-            <p className="text-lg text-slate-500 font-medium tracking-tight">Non-custodial asset governance & institutional yield monitoring.</p>
+            <h1 className="text-2xl font-black text-slate-900 tracking-tight mb-0.5">Your Vaults</h1>
+            <p className="text-xs text-slate-500 font-medium">Non-custodial. You own everything. Withdraw anytime.</p>
           </div>
-          <div className="flex items-center gap-6">
-            <button className="flex items-center gap-3 px-8 py-4 bg-white border border-slate-100 rounded-[28px] text-slate-900 font-black text-sm hover:shadow-xl hover:bg-slate-50 transition-all duration-300">
-              <History className="w-5 h-5 text-slate-400" />
-              History
-            </button>
-            <button className="btn-web-primary h-auto py-4 px-8">
-              <Plus className="w-5 h-5" />
-              Deploy Vault
-            </button>
+          <div className="flex items-center gap-2">
+            <Shield className="w-4 h-4 text-primary" />
+            <span className="text-[10px] text-primary font-bold uppercase tracking-widest">User-Controlled</span>
           </div>
-        </header>
+        </motion.header>
 
-        {/* High-Level Stats */}
-        <motion.div variants={containerVariants} className="grid grid-cols-1 md:grid-cols-4 gap-8">
-          <StatCardWeb variants={itemVariants} icon={<Wallet className="w-6 h-6" />} label="Total Principal" value="14,242.00" color="text-primary" />
-          <StatCardWeb variants={itemVariants} icon={<TrendingUp className="w-6 h-6" />} label="Accrued Yield" value="456.12" color="text-emerald-500" />
-          <StatCardWeb variants={itemVariants} icon={<PieChart className="w-6 h-6" />} label="Allocation" value="3 Active" color="text-secondary" />
-          <StatCardWeb variants={itemVariants} icon={<ShieldCheck className="w-6 h-6" />} label="Security" value="High" color="text-accent" />
+        {/* Total Balance — % focus, FLOW secondary */}
+        <motion.div variants={itemVariants} className="card-web p-6 flex items-center justify-between">
+          <div>
+            <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-1">Total Allocated Funds</p>
+            <h2 className="text-3xl font-black text-slate-900 tracking-tight">100% <span className="text-sm text-slate-400 font-bold">across 3 vaults</span></h2>
+            <p className="text-xs text-slate-500 font-medium mt-1">= {totalFunds.toFixed(1)} FLOW <span className="text-[9px] text-slate-400">(Testnet)</span></p>
+          </div>
+          <div className="flex gap-1 h-3 w-48 rounded-full overflow-hidden">
+            <motion.div 
+              initial={{ width: 0 }} animate={{ width: `${(sim.vaults.savings / totalFunds) * 100}%` }}
+              transition={{ duration: 1, ease: 'easeOut' }}
+              className="bg-primary rounded-full" 
+            />
+            <motion.div 
+              initial={{ width: 0 }} animate={{ width: `${(sim.vaults.bills / totalFunds) * 100}%` }}
+              transition={{ duration: 1, delay: 0.1, ease: 'easeOut' }}
+              className="bg-secondary rounded-full" 
+            />
+            <motion.div 
+              initial={{ width: 0 }} animate={{ width: `${(sim.vaults.spend / totalFunds) * 100}%` }}
+              transition={{ duration: 1, delay: 0.2, ease: 'easeOut' }}
+              className="bg-slate-300 rounded-full" 
+            />
+          </div>
         </motion.div>
 
-        {/* Wide Gallery View */}
-        <motion.div variants={containerVariants} className="grid grid-cols-1 xl:grid-cols-2 gap-10">
+        {/* Vault Cards — behavior first */}
+        <motion.div variants={containerVariants} className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <VaultDetailCard 
             variants={itemVariants}
-            name="Wealth Compounder" 
-            balance="8,450.00" 
-            type="Savings" 
-            yield="12.5%" 
-            status="Active"
-            color="bg-primary"
-            desc="Primary asset accumulation vault with automated yield re-investment protocols."
+            icon={PiggyBank}
+            name="Savings"
+            why="Money you don't touch"
+            balance={sim.vaults.savings}
+            pct={sim.rules.savings}
+            total={totalFunds}
+            earnings={parseFloat((sim.vaults.savings * 0.04).toFixed(1))}
+            safety="High"
+            iconColor="text-primary"
+            iconBg="bg-primary/5"
           />
           <VaultDetailCard 
             variants={itemVariants}
-            name="Emergency Safety" 
-            balance="4,667.00" 
-            type="Safety" 
-            yield="4.2%" 
-            status="Stable"
-            color="bg-accent"
-            desc="High-liquidity vault for immediate capital access during emergency scenarios."
+            icon={Receipt}
+            name="Bills"
+            why="Reserved for expenses"
+            balance={sim.vaults.bills}
+            pct={sim.rules.bills}
+            total={totalFunds}
+            earnings={parseFloat((sim.vaults.bills * 0.02).toFixed(1))}
+            safety="Medium"
+            iconColor="text-emerald-600"
+            iconBg="bg-emerald-50"
+          />
+          <VaultDetailCard 
+            variants={itemVariants}
+            icon={ShoppingBag}
+            name="Spend"
+            why="Free to use"
+            balance={sim.vaults.spend}
+            pct={sim.rules.spend}
+            total={totalFunds}
+            earnings={0}
+            safety="Flexible"
+            iconColor="text-slate-600"
+            iconBg="bg-slate-50"
           />
         </motion.div>
 
-        {/* Detailed Transaction Table (WIDE) */}
-        <motion.section variants={itemVariants} className="card-web overflow-hidden group">
-          <div className="p-10 border-b border-slate-50 flex items-center justify-between bg-white relative">
-            <h3 className="text-2xl font-black text-slate-900 tracking-tighter">Recent Vault Interactions</h3>
-            <button className="text-[10px] text-slate-400 font-black uppercase tracking-[0.2em] hover:text-primary transition-colors">Export Ledger</button>
+        {/* Recent Vault Activity */}
+        <motion.div variants={itemVariants} className="card-web p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-sm font-bold text-slate-900">Recent Vault Activity</h3>
+            <a href="/activity" className="text-xs text-primary font-bold hover:underline flex items-center gap-1">
+              Full Timeline <ArrowRight className="w-3 h-3" />
+            </a>
           </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="bg-slate-50/50">
-                  <th className="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Transaction ID</th>
-                  <th className="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Vault Name</th>
-                  <th className="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Type</th>
-                  <th className="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Amount</th>
-                  <th className="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Status</th>
-                  <th className="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Action</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-50">
-                {[1, 2, 3, 4, 5].map((i) => (
-                  <tr key={i} className="hover:bg-slate-50/30 transition-all duration-300 group/row cursor-pointer">
-                    <td className="px-10 py-8">
-                      <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 bg-white border border-slate-100 rounded-2xl flex items-center justify-center shadow-sm group-hover/row:scale-110 group-hover/row:border-primary/20 transition-all duration-300">
-                          <Clock className="w-5 h-5 text-slate-400" />
-                        </div>
-                        <div>
-                          <p className="text-base font-black text-slate-900 tracking-tight leading-none mb-1">TX-9283-FS</p>
-                          <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest">Mar 01, 2026</p>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-10 py-8">
-                      <span className="text-base font-bold text-slate-600 group-hover:text-primary transition-colors">Wealth Compounder</span>
-                    </td>
-                    <td className="px-10 py-8">
-                      <span className="px-4 py-1.5 bg-emerald-50 text-emerald-600 text-[10px] font-black rounded-full uppercase tracking-[0.2em]">Deposit</span>
-                    </td>
-                    <td className="px-10 py-8">
-                      <span className="text-lg font-black text-slate-900 tracking-tighter">1,500.00 <span className="text-[10px] ml-1">F</span></span>
-                    </td>
-                    <td className="px-10 py-8">
-                      <div className="flex items-center gap-3">
-                        <div className="w-2 h-2 bg-emerald-500 rounded-full shadow-[0_0_10px_rgba(16,185,129,0.5)]" />
-                        <span className="text-sm font-black text-slate-600 uppercase tracking-tight">Confirmed</span>
-                      </div>
-                    </td>
-                    <td className="px-10 py-8">
-                      <button className="p-3 text-slate-300 group-hover/row:text-primary transition-all duration-300 hover:bg-primary/5 rounded-xl">
-                        <ExternalLink className="w-5 h-5" />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="space-y-3">
+            {sim.timeline.filter(e => e.status === 'success' && e.amount).slice(0, 3).map(event => (
+              <div key={event.id} className="flex items-center justify-between py-3 border-b border-slate-50 last:border-0">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-emerald-50 rounded-lg">
+                    <ArrowUpRight className="w-3.5 h-3.5 text-emerald-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-slate-900 tracking-tight">{event.title}</p>
+                    <p className="text-[10px] text-slate-500 font-medium">{event.description}</p>
+                  </div>
+                </div>
+                <span className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">{event.timestamp}</span>
+              </div>
+            ))}
+            {sim.timeline.filter(e => e.status === 'success' && e.amount).length === 0 && (
+              <div className="text-center py-8">
+                <Clock className="w-6 h-6 text-slate-300 mx-auto mb-2" />
+                <p className="text-xs text-slate-400">No vault transactions yet.</p>
+              </div>
+            )}
           </div>
-        </motion.section>
+        </motion.div>
+
+        {/* Flow attribution */}
+        <motion.div variants={itemVariants} className="flex items-center justify-center gap-2 py-3">
+          <Zap className="w-3 h-3 text-primary fill-current" />
+          <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">
+            Vaults backed by Flow Cadence resources · Non-custodial
+          </span>
+        </motion.div>
       </motion.div>
     </PageTransition>
   );
 }
 
-function StatCardWeb({ icon, label, value, color, variants }: any) {
+function VaultDetailCard({ variants, icon: Icon, name, why, balance, pct, total, earnings, safety, iconColor, iconBg }: any) {
+  const actualPct = total > 0 ? ((balance / total) * 100).toFixed(0) : '0';
   return (
-    <motion.div variants={variants} className="card-web p-8 flex flex-col gap-6 group">
-      <div className={`w-14 h-14 rounded-2xl bg-white shadow-xl shadow-slate-100 flex items-center justify-center border border-slate-50 group-hover:scale-110 group-hover:bg-primary group-hover:text-white transition-all duration-500 ${color}`}>
-        {icon}
+    <motion.div variants={variants} className="card-web p-6 space-y-5 group">
+      <div className="flex items-start justify-between">
+        <div className="flex items-center gap-3">
+          <div className={`p-3 rounded-xl ${iconBg} group-hover:scale-105 transition-transform`}>
+            <Icon className={`w-5 h-5 ${iconColor}`} />
+          </div>
+          <div>
+            <h3 className="text-lg font-bold text-slate-900 tracking-tight">{name}</h3>
+            <p className="text-[10px] text-slate-500 font-medium italic">{why}</p>
+          </div>
+        </div>
       </div>
+
       <div>
-        <p className="text-[10px] text-slate-400 uppercase tracking-[0.2em] font-black mb-1.5 leading-none">{label}</p>
-        <p className="text-3xl font-black text-slate-900 tracking-tighter leading-none">{value}{!isNaN(Number(value.replace(/,/g, ''))) && <span className="text-xs ml-1 opacity-40 italic">FLOW</span>}</p>
+        <p className="text-2xl font-black text-slate-900 tracking-tight mb-0.5">{pct}% <span className="text-sm text-slate-400 font-bold">allocated</span></p>
+        <p className="text-xs text-slate-500 font-medium">= {balance.toFixed(1)} FLOW</p>
+        <p className="text-[9px] text-primary font-bold uppercase tracking-widest mt-1">Withdraw anytime</p>
       </div>
-    </motion.div>
-  );
-}
 
-function VaultDetailCard({ name, balance, type, yield: yieldVal, status, color, desc, variants }: any) {
-  return (
-    <motion.div variants={variants} className="card-web group overflow-hidden">
-      <div className="p-10 space-y-10">
-        <div className="flex items-start justify-between">
-          <div className="space-y-3">
-            <h3 className="text-3xl font-black text-slate-900 tracking-tighter group-hover:text-primary transition-colors">{name}</h3>
-            <p className="text-slate-500 text-lg font-medium leading-relaxed max-w-sm tracking-tight">{desc}</p>
-          </div>
-          <div className={`px-5 py-2.5 ${color} text-white rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] shadow-lg shadow-current/20`}>
-            {status}
-          </div>
+      <div className="grid grid-cols-2 gap-3 pt-4 border-t border-slate-100">
+        <div>
+          <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest mb-0.5">Earnings</p>
+          <p className="text-sm font-black text-emerald-600">{earnings > 0 ? `+${earnings} FLOW` : '—'}</p>
         </div>
-
-        <div className="grid grid-cols-2 gap-10">
-          <div className="p-8 bg-slate-50 rounded-[40px] border border-slate-100 group-hover:bg-white transition-colors duration-500">
-            <p className="text-[10px] text-slate-400 font-black uppercase tracking-[0.2em] mb-3 leading-none">Available Principal</p>
-            <p className="text-4xl font-black text-slate-900 tracking-tighter leading-none">{balance} <span className="text-xs italic opacity-30">FLOW</span></p>
-          </div>
-          <div className="p-8 bg-primary/5 rounded-[40px] border border-primary/10 group-hover:bg-primary/10 transition-colors duration-500">
-            <p className="text-[10px] text-primary/60 font-black uppercase tracking-[0.2em] mb-3 leading-none">Net Annual Yield</p>
-            <p className="text-4xl font-black text-primary tracking-tighter leading-none">{yieldVal}</p>
-          </div>
-        </div>
-
-        <div className="flex items-center justify-between pt-6">
-          <div className="flex -space-x-3">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="w-10 h-10 rounded-full border-4 border-white bg-slate-100 group-hover:scale-110 transition-transform duration-500" />
-            ))}
-            <div className="w-10 h-10 rounded-full border-4 border-white bg-slate-900 flex items-center justify-center text-[10px] font-black text-white shadow-xl">+5</div>
-          </div>
-          <button className="flex items-center gap-3 font-black text-sm text-primary group/btn uppercase tracking-widest">
-            Configuration
-            <ChevronRight className="w-5 h-5 group-hover/btn:translate-x-2 transition-all duration-500" />
-          </button>
+        <div>
+          <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest mb-0.5">Safety</p>
+          <p className="text-sm font-black text-slate-900">{safety}</p>
         </div>
       </div>
     </motion.div>
