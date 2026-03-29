@@ -156,6 +156,28 @@ app.get('/activity/:user', (req, res) => {
   );
 });
 
+app.get('/system/status', (_req, res) => {
+  db.all(`SELECT status, retry_count FROM executions`, [], (err, rows) => {
+    if (err) return res.status(500).json({ error: err.message });
+    const total   = rows.length;
+    const success = rows.filter(r => r.status === 'success').length;
+    const failed  = rows.filter(r => r.status === 'failed').length;
+    const pending = rows.filter(r => r.status === 'pending' || r.status === 'submitted').length;
+    const avgRetry = total > 0
+      ? (rows.reduce((s, r) => s + (r.retry_count || 0), 0) / total).toFixed(2)
+      : 0;
+    res.json({
+      total_executions: total,
+      success,
+      failed,
+      pending,
+      failure_rate:    total > 0 ? ((failed / total) * 100).toFixed(1) + '%' : '0%',
+      avg_retry_count: Number(avgRetry),
+      relayer_active:  !!wallet,
+    });
+  });
+});
+
 app.listen(PORT, () => {
   console.log(`[Rhythm Backend] :${PORT} | Flow EVM Testnet (Chain 545)`);
   console.log(`[Contracts] RuleEngine       → ${ADDRESSES.RuleEngine}`);
