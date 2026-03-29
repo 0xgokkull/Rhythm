@@ -2,43 +2,32 @@
 
 import { motion } from 'framer-motion';
 import { 
-  Settings, 
   User, 
   Bell, 
   Shield, 
   Wallet, 
-  Power, 
   LogOut, 
   ChevronRight, 
-  ToggleRight, 
   ExternalLink,
-  ShieldCheck,
-  Smartphone,
   Globe,
   Lock,
-  Zap
+  Zap,
+  Power,
+  Mail,
+  Key,
+  HelpCircle
 } from 'lucide-react';
 import PageTransition from '@/components/PageTransition';
 
 export default function SettingsPage() {
   const containerVariants: any = {
     hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1,
-        delayChildren: 0.1
-      }
-    }
+    visible: { opacity: 1, transition: { staggerChildren: 0.06 } }
   };
 
   const itemVariants: any = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { 
-      opacity: 1, 
-      y: 0,
-      transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] }
-    }
+    hidden: { opacity: 0, y: 12 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.4, ease: [0.16, 1, 0.3, 1] } }
   };
 
   return (
@@ -47,149 +36,180 @@ export default function SettingsPage() {
         variants={containerVariants}
         initial="hidden"
         animate="visible"
-        className="space-y-12"
+        className="space-y-6"
       >
-        <header className="flex items-center justify-between pb-8 border-b border-slate-50">
+        {/* Header */}
+        <motion.header variants={itemVariants} className="flex items-center justify-between pb-5 border-b border-slate-100">
           <div>
-            <h1 className="text-4xl font-black text-slate-900 tracking-tighter mb-1">System Configuration</h1>
-            <p className="text-lg text-slate-500 font-medium tracking-tight">Manage your institutional protocol configurations and asset security.</p>
+            <h1 className="text-2xl font-black text-slate-900 tracking-tight mb-0.5">Settings</h1>
+            <p className="text-xs text-slate-500 font-medium">Manage your account and autopilot preferences.</p>
           </div>
-          <button className="flex items-center gap-3 px-8 py-4 bg-white border border-slate-100 rounded-[28px] text-slate-900 font-black text-sm hover:shadow-xl hover:bg-slate-50 transition-all duration-300">
-            <LogOut className="w-5 h-5 text-rose-500" />
-            Terminate Protocol
+          <button className="flex items-center gap-2 px-4 py-2 text-red-500 bg-red-50 border border-red-100 rounded-xl font-bold text-xs hover:bg-red-100 transition-all">
+            <LogOut className="w-3.5 h-3.5" />
+            Sign Out
           </button>
-        </header>
+        </motion.header>
 
-        <div className="grid grid-cols-1 xl:grid-cols-12 gap-12 items-start">
-          
-          {/* Left Column: Profile & Status (4 cols) */}
-          <motion.div variants={itemVariants} className="xl:col-span-4 space-y-10">
-            <div className="card-web p-12 flex flex-col items-center text-center relative overflow-hidden group/profile">
-              <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-br from-primary/10 to-secondary/10 group-hover:h-40 transition-all duration-700" />
-              <div className="relative z-10 w-32 h-32 rounded-[40px] bg-white shadow-2xl shadow-slate-200 p-[2px] mb-8 mt-12 group-hover:scale-110 transition-transform duration-700">
-                <div className="w-full h-full rounded-[38px] bg-slate-50 flex items-center justify-center overflow-hidden border border-slate-100">
-                  <User className="w-16 h-16 text-primary" />
-                </div>
-              </div>
-              <h3 className="text-3xl font-black text-slate-900 tracking-tighter mb-2">Gokul Rhythm</h3>
-              <p className="text-[10px] text-slate-400 font-black uppercase tracking-[0.2em] mb-10 opacity-60">Verified Institutional Entity</p>
-              
-              <div className="w-full p-8 bg-slate-50 rounded-[40px] border border-slate-50 flex items-center justify-between mb-8 group cursor-pointer hover:bg-white hover:border-primary/20 transition-all duration-500 hover:shadow-xl">
-                <div className="text-left">
-                  <p className="text-[10px] text-slate-400 font-black uppercase tracking-[0.2em] mb-2 leading-none">Flow Ledger ID</p>
-                  <p className="text-sm font-black text-slate-900 font-mono tracking-tight">0x4d5f...3e92</p>
-                </div>
-                <div className="p-3 bg-white rounded-xl shadow-sm">
-                  <ExternalLink className="w-5 h-5 text-slate-300 group-hover:text-primary transition-colors" />
-                </div>
-              </div>
+        {/* Two-column layout */}
+        <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
 
-              <div className="w-full p-10 bg-slate-900 rounded-[48px] shadow-3xl shadow-slate-900/40 flex items-center justify-between group cursor-pointer overflow-hidden relative border border-white/5 active:scale-95 transition-all">
-                <motion.div 
-                  animate={{ scale: [1, 1.2, 1], rotate: [0, 5, 0], opacity: [0.1, 0.2, 0.1] }}
-                  transition={{ duration: 6, repeat: Infinity }}
-                  className="absolute top-0 right-0 w-40 h-40 bg-primary/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" 
-                />
-                <div className="flex items-center gap-6 relative z-10">
-                  <div className="p-4 bg-white/5 backdrop-blur-md rounded-[24px] border border-white/10 text-primary shadow-2xl">
-                    <Power className="w-8 h-8 fill-current stroke-[1.5]" />
-                  </div>
-                  <div className="text-left">
-                    <p className="text-[10px] text-white/40 font-black uppercase tracking-[0.2em] mb-1 leading-none">Protocol State</p>
-                    <p className="text-2xl font-black text-white tracking-tighter">AUTOPILOT</p>
-                  </div>
+          {/* LEFT — Profile & Account (5 cols) */}
+          <div className="xl:col-span-5 space-y-5">
+            {/* Profile Card */}
+            <motion.div variants={itemVariants} className="card-web p-6">
+              <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4">Account</h3>
+              <div className="flex items-center gap-4 mb-5">
+                <div className="w-14 h-14 rounded-2xl bg-primary/5 flex items-center justify-center border border-primary/10">
+                  <User className="w-7 h-7 text-primary" />
                 </div>
-                <div className="w-16 h-8 bg-white/5 rounded-full p-1.5 relative z-10 border border-white/5">
-                  <motion.div layout className="w-5 h-5 bg-primary rounded-full shadow-glow ml-auto" />
+                <div className="flex-1">
+                  <h3 className="text-lg font-bold text-slate-900 tracking-tight">Gokul</h3>
+                  <p className="text-xs text-slate-500 font-medium">gokul@rhythm.flow</p>
                 </div>
-              </div>
-            </div>
-
-            <div className="card-web p-10 flex items-center gap-8 group hover:border-primary/20 transition-all duration-500 cursor-pointer hover:shadow-xl">
-              <div className="p-5 bg-emerald-50 text-emerald-500 rounded-[28px] border border-emerald-100 group-hover:scale-110 group-hover:bg-emerald-500 group-hover:text-white transition-all duration-500">
-                <ShieldCheck className="w-8 h-8 stroke-[1.5]" />
-              </div>
-              <div>
-                <h4 className="font-black text-slate-900 text-lg tracking-tight leading-none mb-1.5">Security Audit</h4>
-                <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest leading-none">Verified • 18m ago</p>
-              </div>
-              <ChevronRight className="w-6 h-6 ml-auto text-slate-200 group-hover:text-primary group-hover:translate-x-1 transition-all" />
-            </div>
-          </motion.div>
-
-          {/* Right Column: Detailed Settings (8 cols) */}
-          <motion.div variants={itemVariants} className="xl:col-span-8 space-y-10">
-            <div className="card-web overflow-hidden border-none shadow-web-xl bg-white/40 backdrop-blur-xl">
-              <div className="p-10 border-b border-slate-50 relative bg-white">
-                <h3 className="text-3xl font-black text-slate-900 tracking-tighter">System Preferences</h3>
-                <div className="absolute bottom-0 left-10 right-10 h-[2px] bg-primary/20" />
+                <div className="flex items-center gap-2 px-3 py-1.5 bg-primary/5 rounded-lg border border-primary/10">
+                  <div className="w-2 h-2 bg-primary rounded-full" />
+                  <span className="text-[9px] text-primary font-bold uppercase tracking-widest">Autopilot On</span>
+                </div>
               </div>
               
-              <div className="p-6 space-y-6">
-                <SettingsSection title="Identity & Asset Governance">
-                  <SettingsRow icon={<User className="w-6 h-6" />} label="Entity Information" desc="Review institutional identity and verified KYC vectors." />
-                  <SettingsRow icon={<Wallet className="w-6 h-6" />} label="Protocol Targets" desc="Whitelist secondary EOA and contract targets for outflows." badge="3 Targets" />
-                  <SettingsRow icon={<Shield className="w-6 h-6" />} label="Guardians" desc="Configure institutional multi-sig and key recovery paths." />
-                </SettingsSection>
-
-                <SettingsSection title="Protocol Infrastructure">
-                  <SettingsRow icon={<Globe className="w-6 h-6" />} label="Network Nodes" desc="Select high-availability Flow network entry points." badge="Testnet" />
-                  <SettingsRow icon={<Bell className="w-6 h-6" />} label="Alert Engine" desc="Configure real-time webhooks and critical push vectors." />
-                  <SettingsRow icon={<Lock className="w-6 h-6" />} label="Privacy Layers" desc="Manage zero-knowledge protocol visibility settings." />
-                </SettingsSection>
-
-                <SettingsSection title="Terminal Environment">
-                  <SettingsRow icon={<Smartphone className="w-6 h-6" />} label="Entity Instances" desc="Review authorized hardware sessions and node access." badge="2 Nodes" />
-                  <SettingsRow icon={<ToggleRight className="w-6 h-6" />} label="Interface Engine" desc="Switch between standard, obsidian, and high-precision modes." badge="Lumina" />
-                </SettingsSection>
+              <div className="space-y-3 pt-4 border-t border-slate-100">
+                <InfoRow icon={<Mail className="w-3.5 h-3.5" />} label="Email" value="gokul@rhythm.flow" />
+                <InfoRow icon={<Globe className="w-3.5 h-3.5" />} label="Network" value="Flow Testnet" badge="Testnet" />
+                <InfoRow icon={<Key className="w-3.5 h-3.5" />} label="Account ID" value="0x4d5f...3e92" mono />
               </div>
-            </div>
+            </motion.div>
 
-            <div className="flex items-center justify-between px-8 text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">
-              <span>Next.js 16.2.1 • Rhythm Protocol v1.0.4</span>
-              <span className="flex items-center gap-3">
-                <Zap className="w-4 h-4 text-primary fill-current" />
-                Alpha Optimized Build
-              </span>
-            </div>
-          </motion.div>
+            {/* Wallet */}
+            <motion.div variants={itemVariants} className="card-web p-5 flex items-center justify-between group cursor-pointer hover:border-primary/20 transition-all">
+              <div className="flex items-center gap-4">
+                <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
+                  <Wallet className="w-5 h-5 text-slate-400" />
+                </div>
+                <div>
+                  <h4 className="text-sm font-bold text-slate-900">Flow Wallet</h4>
+                  <p className="text-[10px] text-slate-500 font-medium font-mono">0x4d5f...3e92 · Auto-created</p>
+                </div>
+              </div>
+              <ExternalLink className="w-4 h-4 text-slate-300 group-hover:text-primary transition-colors" />
+            </motion.div>
 
+            {/* Help & Support */}
+            <motion.div variants={itemVariants} className="card-web p-6">
+              <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4">Support</h3>
+              <div className="space-y-1">
+                <HelpRow icon={<HelpCircle className="w-4 h-4" />} label="Help Center" desc="Guides and FAQs" />
+                <HelpRow icon={<Mail className="w-4 h-4" />} label="Contact Us" desc="support@rhythm.flow" />
+              </div>
+            </motion.div>
+          </div>
+
+          {/* RIGHT — Preferences (7 cols) */}
+          <div className="xl:col-span-7 space-y-5">
+            {/* Preferences list */}
+            <motion.div variants={itemVariants} className="card-web overflow-hidden">
+              <div className="px-6 py-4 border-b border-slate-50">
+                <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest">Preferences</h3>
+              </div>
+              <div className="divide-y divide-slate-50">
+                <SettingsRow icon={<Bell className="w-4 h-4" />} label="Notifications" desc="Split alerts and retry confirmations" />
+                <SettingsRow icon={<Shield className="w-4 h-4" />} label="Security" desc="Password, recovery, 2FA" />
+                <SettingsRow icon={<Lock className="w-4 h-4" />} label="Privacy" desc="Data visibility and export" />
+              </div>
+            </motion.div>
+
+            {/* System settings */}
+            <motion.div variants={itemVariants} className="card-web overflow-hidden">
+              <div className="px-6 py-4 border-b border-slate-50">
+                <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest">System</h3>
+              </div>
+              <div className="divide-y divide-slate-50">
+                <SettingsRow icon={<Globe className="w-4 h-4" />} label="Network" desc="Flow Testnet · Auto-selected" badge="Testnet" />
+                <SettingsRow icon={<Power className="w-4 h-4" />} label="Autopilot" desc="Enable / disable automatic splits" badge="Active" badgeColor="text-primary bg-primary/5 border-primary/10" />
+                <SettingsRow icon={<Zap className="w-4 h-4" />} label="Transaction Fees" desc="Gasless execution via Flow sponsorship" badge="Free" badgeColor="text-emerald-600 bg-emerald-50 border-emerald-200" />
+              </div>
+            </motion.div>
+
+            {/* Danger zone */}
+            <motion.div variants={itemVariants} className="card-web overflow-hidden border-red-100">
+              <div className="px-6 py-4 border-b border-red-50">
+                <h3 className="text-xs font-bold text-red-400 uppercase tracking-widest">Danger Zone</h3>
+              </div>
+              <div className="p-5 flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-bold text-slate-900">Delete Account</p>
+                  <p className="text-[10px] text-slate-500 font-medium">Permanently remove your account and all vaults</p>
+                </div>
+                <button className="px-4 py-2 text-red-500 bg-red-50 border border-red-100 rounded-lg font-bold text-xs hover:bg-red-100 transition-all">
+                  Delete
+                </button>
+              </div>
+            </motion.div>
+          </div>
         </div>
+
+        {/* Footer */}
+        <motion.div variants={itemVariants} className="flex items-center justify-center gap-2 py-3">
+          <Zap className="w-3 h-3 text-primary fill-current" />
+          <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">
+            Rhythm v1.0 · Powered by Flow
+          </span>
+        </motion.div>
       </motion.div>
     </PageTransition>
   );
 }
 
-function SettingsSection({ title, children }: any) {
+function InfoRow({ icon, label, value, badge, mono }: any) {
   return (
-    <div className="space-y-4">
-      <h4 className="text-[10px] text-slate-400 font-black uppercase tracking-[0.3em] px-6 pt-6">{title}</h4>
-      <div className="space-y-3">
-        {children}
+    <div className="flex items-center justify-between py-2">
+      <div className="flex items-center gap-2.5 text-slate-400">
+        {icon}
+        <span className="text-xs text-slate-500 font-medium">{label}</span>
+      </div>
+      <div className="flex items-center gap-2">
+        <span className={`text-xs font-bold text-slate-900 ${mono ? 'font-mono' : ''}`}>{value}</span>
+        {badge && (
+          <span className="px-2 py-0.5 bg-amber-50 text-amber-700 text-[9px] font-bold rounded border border-amber-200 uppercase tracking-widest">{badge}</span>
+        )}
       </div>
     </div>
   );
 }
 
-function SettingsRow({ icon, label, desc, badge }: any) {
+function HelpRow({ icon, label, desc }: any) {
   return (
-    <div className="flex items-center justify-between p-8 bg-white hover:bg-slate-50/50 rounded-[40px] transition-all duration-500 border border-slate-50 hover:border-primary/10 group cursor-pointer shadow-sm hover:shadow-xl relative overflow-hidden">
-      <div className="flex items-center gap-8 pl-2">
-        <div className="p-5 bg-slate-50 rounded-[28px] text-slate-400 group-hover:text-primary group-hover:bg-white group-hover:scale-110 transition-all duration-500 shadow-sm border border-slate-100/50">
+    <div className="flex items-center justify-between py-3 px-1 hover:bg-slate-50 rounded-lg transition-all cursor-pointer group">
+      <div className="flex items-center gap-3">
+        <div className="p-2 bg-slate-50 rounded-lg text-slate-400 group-hover:text-primary group-hover:bg-primary/5 transition-all">{icon}</div>
+        <div>
+          <p className="text-sm font-bold text-slate-900 group-hover:text-primary transition-colors">{label}</p>
+          <p className="text-[10px] text-slate-500">{desc}</p>
+        </div>
+      </div>
+      <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-primary transition-colors" />
+    </div>
+  );
+}
+
+function SettingsRow({ icon, label, desc, badge, badgeColor }: any) {
+  return (
+    <div className="flex items-center justify-between px-6 py-4 hover:bg-slate-50/50 transition-all cursor-pointer group">
+      <div className="flex items-center gap-4">
+        <div className="p-2.5 bg-slate-50 rounded-xl text-slate-400 group-hover:text-primary group-hover:bg-primary/5 transition-all border border-slate-100">
           {icon}
         </div>
         <div>
-          <h5 className="text-xl font-black text-slate-900 tracking-tight group-hover:text-primary transition-colors duration-500">{label}</h5>
-          <p className="text-sm text-slate-500 font-medium tracking-tight mt-1 leading-none">{desc}</p>
+          <h5 className="text-sm font-bold text-slate-900 tracking-tight group-hover:text-primary transition-colors">{label}</h5>
+          <p className="text-[10px] text-slate-500 font-medium">{desc}</p>
         </div>
       </div>
-      <div className="flex items-center gap-8 pr-2">
+      <div className="flex items-center gap-3">
         {badge && (
-          <span className="px-5 py-2 bg-slate-900 text-white text-[10px] font-black rounded-2xl uppercase tracking-[0.2em] shadow-2xl">
+          <span className={`px-2.5 py-1 text-[9px] font-bold rounded-md uppercase tracking-widest border ${badgeColor || 'text-amber-700 bg-amber-50 border-amber-200'}`}>
             {badge}
           </span>
         )}
-        <ChevronRight className="w-6 h-6 text-slate-200 group-hover:text-primary group-hover:translate-x-2 transition-all duration-500" />
+        <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
       </div>
     </div>
   );
