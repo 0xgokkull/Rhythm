@@ -2,40 +2,36 @@
 
 import { motion } from 'framer-motion';
 import { 
-  Wallet, 
-  ShieldCheck, 
   Zap, 
-  ArrowUpRight, 
-  ArrowDownLeft, 
-  MoreHorizontal, 
   TrendingUp, 
-  Clock, 
-  PieChart, 
   ArrowRight,
-  Plus
+  Play,
+  CheckCircle2,
+  XCircle,
+  RotateCcw,
+  Clock,
+  Loader2,
+  PiggyBank,
+  Receipt,
+  ShoppingBag,
+  Percent,
+  Activity
 } from 'lucide-react';
 import PageTransition from '@/components/PageTransition';
-import Image from 'next/image';
+import { useSimulation, SystemStatus } from '@/context/SimulationContext';
 
 export default function DashboardPage() {
+  const sim = useSimulation();
+  const totalFunds = sim.vaults.savings + sim.vaults.bills + sim.vaults.spend;
+
   const containerVariants: any = {
     hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1,
-        delayChildren: 0.1
-      }
-    }
+    visible: { opacity: 1, transition: { staggerChildren: 0.08, delayChildren: 0.05 } }
   };
 
   const itemVariants: any = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { 
-      opacity: 1, 
-      y: 0,
-      transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] }
-    }
+    hidden: { opacity: 0, y: 12 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.4, ease: [0.16, 1, 0.3, 1] } }
   };
 
   return (
@@ -44,259 +40,243 @@ export default function DashboardPage() {
         variants={containerVariants}
         initial="hidden"
         animate="visible"
-        className="space-y-12"
+        className="space-y-6"
       >
-        {/* Top Summary Cards */}
-        <motion.div 
-          variants={containerVariants}
-          className="grid grid-cols-1 md:grid-cols-3 gap-8"
-        >
-          <SummaryCard 
-            variants={itemVariants}
-            title="Total Net Worth" 
-            value="14,242 FLOW" 
-            change="+4.2%" 
-            icon={Wallet} 
-            color="text-primary" 
-            bg="bg-primary/5" 
-          />
-          <SummaryCard 
-            variants={itemVariants}
-            title="Monthly Inflow" 
-            value="5,000 FLOW" 
-            change="+12.5%" 
-            icon={TrendingUp} 
-            color="text-emerald-500" 
-            bg="bg-emerald-500/5" 
-          />
-          <SummaryCard 
-            variants={itemVariants}
-            title="Savings Rate" 
-            value="38.5%" 
-            change="Target: 40%" 
-            icon={PieChart} 
-            color="text-secondary" 
-            bg="bg-secondary/5" 
+        {/* ══════════════ AUTOPILOT HERO ══════════════ */}
+        <motion.div variants={itemVariants}>
+          <AutopilotHero 
+            status={sim.status}
+            lastRun={sim.lastRun}
+            lastAmount={sim.lastAmount}
+            nextRun={sim.nextRun}
+            retryCount={sim.retryCount}
+            onSimulate={sim.simulateSalary}
           />
         </motion.div>
 
-        {/* Main Grid Layout */}
-        <div className="grid grid-cols-1 xl:grid-cols-12 gap-10 items-start">
+        {/* ══════════════ AUTOMATION METRICS (behavior, not balance) ══════════════ */}
+        <motion.div variants={containerVariants} className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <motion.div variants={itemVariants} className="card-web p-5 flex items-center justify-between group">
+            <div>
+              <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-1">Auto-Saved This Month</p>
+              <h2 className="text-2xl font-black text-slate-900 tracking-tight leading-none">
+                {sim.rules.savings}% <span className="text-xs text-slate-400 font-bold">saved</span>
+              </h2>
+              <p className="text-[10px] text-slate-500 font-medium mt-1">= {sim.autoSavedThisMonth} FLOW</p>
+            </div>
+            <div className="p-3 bg-emerald-50 text-emerald-600 rounded-xl group-hover:scale-105 transition-transform">
+              <PiggyBank className="w-5 h-5" />
+            </div>
+          </motion.div>
           
-          {/* Column 1: Vaults (4 cols) */}
-          <motion.div variants={itemVariants} className="xl:col-span-4 space-y-8">
-            <div className="flex items-center justify-between px-2">
-              <h3 className="text-2xl font-black text-slate-900 tracking-tighter">Active Vaults</h3>
-              <button className="text-primary font-bold text-sm hover:underline tracking-tight">View All</button>
+          <motion.div variants={itemVariants} className="card-web p-5 flex items-center justify-between group">
+            <div>
+              <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-1">Automated Transfers</p>
+              <h2 className="text-2xl font-black text-slate-900 tracking-tight leading-none">{sim.totalAutomated} <span className="text-xs text-slate-400 font-bold">completed</span></h2>
+              <p className="text-[10px] text-slate-500 font-medium mt-1">All gasless on Flow</p>
             </div>
-            <div className="space-y-5">
-              <VaultCardWeb 
-                name="Wealth Compounder" 
-                balance="8,450 FLOW" 
-                type="Savings" 
-                progress={65} 
-                color="bg-gradient-to-r from-primary to-secondary"
-              />
-              <VaultCardWeb 
-                name="Essential Bills" 
-                balance="1,125 FLOW" 
-                type="Operational" 
-                progress={82} 
-                color="bg-slate-900"
-              />
-              <VaultCardWeb 
-                name="Emergency Fund" 
-                balance="4,667 FLOW" 
-                type="Safety" 
-                progress={95} 
-                color="bg-accent"
-              />
+            <div className="p-3 bg-primary/5 text-primary rounded-xl group-hover:scale-105 transition-transform">
+              <Activity className="w-5 h-5" />
             </div>
-            <button className="w-full py-6 border-2 border-dashed border-slate-100 rounded-[32px] text-slate-400 font-bold hover:border-primary/30 hover:text-primary hover:bg-primary/5 transition-all flex items-center justify-center gap-3 group">
-              <Plus className="w-6 h-6 group-hover:rotate-90 transition-transform duration-500" />
-              Build New Vault
-            </button>
+          </motion.div>
+          
+          <motion.div variants={itemVariants} className="card-web p-5 flex items-center justify-between group">
+            <div>
+              <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-1">Success Rate</p>
+              <h2 className="text-2xl font-black text-slate-900 tracking-tight leading-none">{sim.successRate}%</h2>
+              <p className="text-[10px] text-slate-500 font-medium mt-1">Including retries</p>
+            </div>
+            <div className="p-3 bg-blue-50 text-blue-600 rounded-xl group-hover:scale-105 transition-transform">
+              <CheckCircle2 className="w-5 h-5" />
+            </div>
+          </motion.div>
+        </motion.div>
+
+        {/* ══════════════ VAULTS + ACTIVITY ══════════════ */}
+        <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
+          
+          {/* Vault Balances — % primary, FLOW secondary */}
+          <motion.div variants={itemVariants} className="xl:col-span-5 space-y-4">
+            <div className="flex items-center justify-between px-1">
+              <h3 className="text-lg font-bold text-slate-900 tracking-tight">Fund Allocation</h3>
+              <span className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">user-controlled</span>
+            </div>
+            
+            <VaultCard 
+              icon={PiggyBank}
+              name="Savings" 
+              purpose="Money you don't touch"
+              balance={sim.vaults.savings}
+              pct={sim.rules.savings}
+              total={totalFunds}
+              iconColor="text-primary"
+              iconBg="bg-primary/5"
+            />
+            <VaultCard 
+              icon={Receipt}
+              name="Bills" 
+              purpose="Reserved for expenses"
+              balance={sim.vaults.bills}
+              pct={sim.rules.bills}
+              total={totalFunds}
+              iconColor="text-emerald-600"
+              iconBg="bg-emerald-50"
+            />
+            <VaultCard 
+              icon={ShoppingBag}
+              name="Spend" 
+              purpose="Free to use"
+              balance={sim.vaults.spend}
+              pct={sim.rules.spend}
+              total={totalFunds}
+              iconColor="text-slate-600"
+              iconBg="bg-slate-50"
+            />
+
+            {/* Total */}
+            <div className="px-5 py-3 bg-slate-50 rounded-xl border border-slate-100 flex items-center justify-between">
+              <span className="text-xs text-slate-500 font-bold">Total Funds</span>
+              <span className="text-sm font-black text-slate-900">{totalFunds.toFixed(1)} FLOW <span className="text-[9px] text-slate-400 font-bold">(Testnet)</span></span>
+            </div>
           </motion.div>
 
-          {/* Column 2: Chart & Performance (5 cols) */}
-          <motion.div variants={itemVariants} className="xl:col-span-5 space-y-8">
-            <div className="card-web p-10 h-[580px] flex flex-col group">
-              <div className="flex items-center justify-between mb-10">
-                <div>
-                  <h3 className="text-2xl font-black text-slate-900 tracking-tighter">Portfolio Performance</h3>
-                  <p className="text-sm text-slate-400 font-bold uppercase tracking-widest mt-1">Smart Engine Analysis</p>
-                </div>
-                <div className="flex p-1.5 bg-slate-50 rounded-2xl">
-                  <button className="px-5 py-2.5 bg-white shadow-sm rounded-xl text-xs font-black text-primary">ALL</button>
-                  <button className="px-5 py-2.5 text-xs font-black text-slate-400">1Y</button>
-                  <button className="px-5 py-2.5 text-xs font-black text-slate-400">6M</button>
-                </div>
+          {/* System Activity Timeline */}
+          <motion.div variants={itemVariants} className="xl:col-span-7">
+            <div className="card-web p-6">
+              <div className="flex items-center justify-between mb-5">
+                <h3 className="text-lg font-bold text-slate-900 tracking-tight">System Activity</h3>
+                <a href="/activity" className="text-xs text-primary font-bold hover:underline flex items-center gap-1">
+                  Full Timeline <ArrowRight className="w-3 h-3" />
+                </a>
               </div>
               
-              {/* Mock Chart Visualization */}
-              <div className="flex-1 relative flex items-end gap-3 px-2 pb-8">
-                {[40, 55, 45, 70, 60, 85, 95, 80, 100].map((h, i) => (
-                  <motion.div 
-                    key={i}
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: `${h}%`, opacity: 1 }}
-                    transition={{ delay: 0.5 + (i * 0.1), duration: 1, ease: "easeOut" }}
-                    className="flex-1 bg-slate-50 rounded-t-2xl relative group/bar cursor-pointer"
-                  >
-                    <div className="absolute inset-0 bg-gradient-to-t from-primary/80 to-secondary rounded-t-2xl opacity-0 group-hover/bar:opacity-100 transition-all duration-500 shadow-lg shadow-primary/20" />
-                    {i === 8 && (
-                      <motion.div 
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 1.5 }}
-                        className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-16 bg-slate-900 text-white text-[10px] py-1.5 px-3 rounded-full font-black shadow-xl whitespace-nowrap"
-                      >
-                        14,242 FLOW
-                      </motion.div>
-                    )}
-                  </motion.div>
+              <div className="space-y-0">
+                {sim.timeline.slice(0, 6).map((event, idx) => (
+                  <TimelineItem key={event.id} event={event} isLast={idx === Math.min(5, sim.timeline.length - 1)} />
                 ))}
-              </div>
-              
-              <div className="grid grid-cols-2 gap-10 pt-10 border-t border-slate-50 mt-auto">
-                <div>
-                  <p className="text-[10px] text-slate-400 font-black uppercase tracking-[0.2em] mb-2">Projected ROI</p>
-                  <p className="text-3xl font-black text-slate-900 tracking-tighter">12.8% <span className="text-sm text-emerald-500 font-bold">/ p.a.</span></p>
-                </div>
-                <div>
-                  <p className="text-[10px] text-slate-400 font-black uppercase tracking-[0.2em] mb-2">Risk Adjusted</p>
-                  <p className="text-3xl font-black text-slate-900 tracking-tighter">Peak <span className="text-sm text-primary font-bold">Safety</span></p>
-                </div>
+                {sim.timeline.length === 0 && (
+                  <div className="text-center py-10">
+                    <Clock className="w-8 h-8 text-slate-300 mx-auto mb-3" />
+                    <p className="text-sm text-slate-400 font-medium">No activity yet — click "Simulate Deposit" to trigger your first split.</p>
+                  </div>
+                )}
               </div>
             </div>
           </motion.div>
-
-          {/* Column 3: Stats & Feed (3 cols) */}
-          <motion.div variants={itemVariants} className="xl:col-span-3 space-y-8">
-            <div className="card-web p-8 space-y-8">
-              <h3 className="text-xl font-black text-slate-900 tracking-tighter">Institutional Feed</h3>
-              <div className="space-y-8">
-                <FeedItem 
-                  title="Inflow Protocol" 
-                  desc="Flow Testnet • Node 0x82" 
-                  val="+5,000.00" 
-                  time="2h ago" 
-                  type="in" 
-                />
-                <FeedItem 
-                  title="Vault Distribution" 
-                  desc="Wealth Compounder" 
-                  val="-1,500.00" 
-                  time="2h ago" 
-                  type="out" 
-                />
-                <FeedItem 
-                  title="Gas Settlement" 
-                  desc="Flow Network" 
-                  val="-0.04" 
-                  time="1d ago" 
-                  type="out" 
-                />
-              </div>
-              <button className="w-full btn-web-primary py-4 text-sm font-black tracking-tight group mt-4">
-                Global History
-                <ArrowRight className="w-5 h-5 group-hover:translate-x-2 transition-transform duration-500" />
-              </button>
-            </div>
-
-            <div className="card-web p-8 bg-slate-900 text-white border-none shadow-2xl shadow-slate-900/40 relative overflow-hidden group">
-              <motion.div 
-                animate={{ 
-                  scale: [1, 1.2, 1],
-                  opacity: [0.2, 0.4, 0.2] 
-                }}
-                transition={{ duration: 4, repeat: Infinity }}
-                className="absolute -right-8 -bottom-8 w-48 h-48 bg-primary/30 rounded-full blur-3xl" 
-              />
-              <ShieldCheck className="w-12 h-12 text-primary mb-6 group-hover:scale-110 transition-transform duration-500" />
-              <h4 className="font-black text-xl tracking-tight mb-2">Smart Autopilot</h4>
-              <p className="text-sm text-slate-400 font-medium mb-8 leading-relaxed">
-                Your capital is currently optimized for maximum yield across institutional protocol nodes.
-              </p>
-              <div className="bg-white/10 backdrop-blur-md p-5 rounded-[24px] flex items-center justify-between border border-white/5 shadow-2xl">
-                <div>
-                  <p className="text-[10px] text-slate-400 uppercase font-black tracking-widest leading-none mb-1">Efficiency</p>
-                  <p className="text-2xl font-black tracking-tighter">98.4%</p>
-                </div>
-                <Zap className="w-6 h-6 text-primary fill-current" />
-              </div>
-            </div>
-          </motion.div>
-
         </div>
       </motion.div>
     </PageTransition>
   );
 }
 
-function SummaryCard({ title, value, change, icon: Icon, color, bg, variants }: any) {
-  return (
-    <motion.div variants={variants} className="card-web p-10 relative flex items-center justify-between group">
-      <div className="space-y-4">
-        <p className="text-[10px] text-slate-400 font-black uppercase tracking-[0.2em]">{title}</p>
-        <div className="flex flex-col">
-          <h2 className="text-4xl font-black text-slate-900 tracking-tighter leading-none mb-2">{value}</h2>
-          <span className={`text-sm font-black tracking-tight flex items-center gap-1 ${change.startsWith('+') ? 'text-emerald-500' : 'text-slate-400'}`}>
-            {change.startsWith('+') && <ArrowUpRight className="w-3 h-3" />}
-            {change}
-          </span>
-        </div>
-      </div>
-      <div className={`p-6 ${bg} ${color} rounded-[28px] group-hover:scale-110 group-hover:bg-primary group-hover:text-white transition-all duration-500 shadow-xl shadow-transparent hover:shadow-primary/20`}>
-        <Icon className="w-8 h-8" />
-      </div>
-    </motion.div>
-  );
-}
+/* ═══ AUTOPILOT HERO ═══ */
+function AutopilotHero({ status, lastRun, lastAmount, nextRun, retryCount, onSimulate }: {
+  status: SystemStatus; lastRun: string | null; lastAmount: string | null;
+  nextRun: string; retryCount: number; onSimulate: () => void;
+}) {
+  const statusConfig: Record<SystemStatus, { icon: any; label: string; sublabel: string; color: string; bg: string; dot: string; pulse?: boolean }> = {
+    idle: { icon: CheckCircle2, label: 'Autopilot Active', sublabel: 'Monitoring for deposits', color: 'text-emerald-700', bg: 'bg-emerald-50 border-emerald-200', dot: 'bg-emerald-500', pulse: true },
+    detecting: { icon: Loader2, label: 'Deposit Detected', sublabel: 'Incoming funds identified', color: 'text-blue-700', bg: 'bg-blue-50 border-blue-200', dot: 'bg-blue-500', pulse: true },
+    splitting: { icon: Loader2, label: 'Auto-Splitting Funds', sublabel: 'Allocating to vaults', color: 'text-blue-700', bg: 'bg-blue-50 border-blue-200', dot: 'bg-blue-500', pulse: true },
+    failed: { icon: XCircle, label: 'Transaction Failed', sublabel: 'Retry engine engaging', color: 'text-red-700', bg: 'bg-red-50 border-red-200', dot: 'bg-red-500' },
+    retrying: { icon: RotateCcw, label: `Retrying (${retryCount}/3)`, sublabel: 'Re-submitting to backup node', color: 'text-amber-700', bg: 'bg-amber-50 border-amber-200', dot: 'bg-amber-500', pulse: true },
+    success: { icon: CheckCircle2, label: 'Split Completed', sublabel: 'All funds allocated', color: 'text-emerald-700', bg: 'bg-emerald-50 border-emerald-200', dot: 'bg-emerald-500' },
+  };
 
-function VaultCardWeb({ name, balance, type, progress, color }: any) {
+  const cfg = statusConfig[status];
+  const Icon = cfg.icon;
+  const isProcessing = ['detecting', 'splitting', 'retrying'].includes(status);
+
   return (
-    <div className="card-web p-8 hover:border-primary/30 transition-all cursor-pointer group">
-      <div className="flex items-start justify-between mb-6">
-        <div>
-          <h4 className="font-black text-slate-900 text-lg tracking-tight group-hover:text-primary transition-colors">{name}</h4>
-          <p className="text-[10px] text-slate-400 font-black uppercase tracking-[0.2em] mt-1">{type}</p>
+    <div className={`card-web p-6 border ${cfg.bg} transition-all duration-500`}>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <div className={`relative p-3 rounded-xl ${cfg.bg}`}>
+            <Icon className={`w-6 h-6 ${cfg.color} ${isProcessing ? 'animate-spin' : ''}`} />
+            {cfg.pulse && (
+              <div className={`absolute top-1 right-1 w-2.5 h-2.5 ${cfg.dot} rounded-full`}>
+                <div className={`absolute inset-0 ${cfg.dot} rounded-full animate-ping opacity-75`} />
+              </div>
+            )}
+          </div>
+          
+          <div>
+            <h2 className={`text-lg font-bold ${cfg.color} tracking-tight`}>{cfg.label}</h2>
+            <p className="text-xs text-slate-500 font-medium mt-0.5">
+              {lastRun 
+                ? `Last: ${lastAmount} processed at ${lastRun}` 
+                : cfg.sublabel}
+            </p>
+          </div>
         </div>
-        <p className="text-2xl font-black text-slate-900 tracking-tighter">{balance}</p>
-      </div>
-      <div className="space-y-3">
-        <div className="flex justify-between text-[11px] font-black text-slate-400 uppercase tracking-widest">
-          <span>Allocation</span>
-          <span className="text-slate-900">{progress}%</span>
-        </div>
-        <div className="h-2.5 w-full bg-slate-50 rounded-full overflow-hidden">
-          <motion.div 
-            initial={{ width: 0 }}
-            animate={{ width: `${progress}%` }}
-            transition={{ duration: 1.5, ease: "easeOut" }}
-            className={`h-full ${color} rounded-full shadow-lg shadow-primary/20`}
-          />
+
+        <div className="flex items-center gap-4">
+          <div className="text-right hidden sm:block">
+            <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">Next scheduled</p>
+            <p className="text-sm font-bold text-slate-700">{nextRun}</p>
+          </div>
+          
+          <button
+            onClick={onSimulate}
+            disabled={isProcessing || status === 'failed'}
+            className="flex items-center gap-2 px-5 py-2.5 bg-primary text-white rounded-xl font-bold text-xs hover:shadow-lg hover:shadow-primary/20 hover:-translate-y-0.5 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-none"
+          >
+            <Play className="w-3.5 h-3.5 fill-current" />
+            Simulate Deposit
+          </button>
         </div>
       </div>
     </div>
   );
 }
 
-function FeedItem({ title, desc, val, time, type }: any) {
+/* ═══ VAULT CARD — % primary, FLOW secondary ═══ */
+function VaultCard({ icon: Icon, name, purpose, balance, pct, total, iconColor, iconBg }: any) {
+  const pctOfTotal = total > 0 ? ((balance / total) * 100).toFixed(0) : '0';
   return (
-    <div className="flex items-center justify-between group cursor-pointer">
-      <div className="flex items-center gap-5">
-        <div className={`p-4 rounded-2xl ${type === 'in' ? 'bg-emerald-50 text-emerald-500' : 'bg-slate-50 text-slate-400'} group-hover:scale-110 group-hover:bg-primary group-hover:text-white transition-all duration-500`}>
-          {type === 'in' ? <ArrowDownLeft className="w-5 h-5" /> : <ArrowUpRight className="w-5 h-5" />}
+    <div className="card-web p-5 flex items-center justify-between group cursor-pointer">
+      <div className="flex items-center gap-4">
+        <div className={`p-3 rounded-xl ${iconBg} group-hover:scale-105 transition-transform`}>
+          <Icon className={`w-5 h-5 ${iconColor}`} />
         </div>
         <div>
-          <p className="text-base font-black text-slate-900 leading-tight tracking-tight group-hover:text-primary transition-colors">{title}</p>
-          <p className="text-[11px] text-slate-400 font-bold tracking-tight">{desc}</p>
+          <h4 className="text-base font-bold text-slate-900 tracking-tight">{name}</h4>
+          <p className="text-[10px] text-slate-500 font-medium">{purpose}</p>
         </div>
       </div>
       <div className="text-right">
-        <p className={`text-base font-black tracking-tighter ${type === 'in' ? 'text-emerald-500' : 'text-slate-900'}`}>{type === 'in' ? '+' : '-'}{val} <span className="text-[10px] ml-0.5">F</span></p>
-        <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest">{time}</p>
+        <p className="text-xl font-black text-slate-900 tracking-tight">{pct}% <span className="text-xs text-slate-400 font-bold">allocated</span></p>
+        <p className="text-[10px] text-slate-500 font-medium">= {balance.toFixed(1)} FLOW</p>
+      </div>
+    </div>
+  );
+}
+
+/* ═══ TIMELINE ITEM ═══ */
+function TimelineItem({ event, isLast }: { event: any; isLast: boolean }) {
+  const colors: Record<string, { dot: string; line: string }> = {
+    success: { dot: 'bg-emerald-500', line: 'bg-emerald-200' },
+    warning: { dot: 'bg-amber-500', line: 'bg-amber-200' },
+    error: { dot: 'bg-red-500', line: 'bg-red-200' },
+    info: { dot: 'bg-blue-500', line: 'bg-blue-200' },
+    processing: { dot: 'bg-blue-500', line: 'bg-blue-200' },
+  };
+  const c = colors[event.status] || colors.info;
+
+  return (
+    <div className="flex gap-4 group">
+      <div className="flex flex-col items-center w-5 shrink-0">
+        <div className={`w-2.5 h-2.5 rounded-full ${c.dot} mt-1.5 shrink-0 ring-4 ring-white z-10`} />
+        {!isLast && <div className={`w-px flex-1 ${c.line} -mt-0.5`} />}
+      </div>
+      <div className="pb-5 flex-1">
+        <div className="flex items-start justify-between">
+          <div>
+            <p className="text-sm font-bold text-slate-900 tracking-tight leading-tight">{event.title}</p>
+            <p className="text-[11px] text-slate-500 font-medium mt-0.5 leading-relaxed">{event.description}</p>
+          </div>
+          <span className="text-[9px] text-slate-400 font-bold uppercase tracking-widest shrink-0 ml-4 mt-1">{event.timestamp}</span>
+        </div>
       </div>
     </div>
   );
