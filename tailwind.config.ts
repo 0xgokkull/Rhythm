@@ -13,26 +13,36 @@ const config: Config = {
         foreground: "var(--foreground)",
         primary: {
           DEFAULT: "#00EF8B",
-          glow: "rgba(0, 239, 139, 0.15)",
+          hover: "#00d67d",
+          light: "#33f2a2",
         },
-        secondary: "#121212",
-        card: {
-          bg: "rgba(255, 255, 255, 0.05)",
-          border: "rgba(255, 255, 255, 0.1)",
+        secondary: "#00FFA3",
+        accent: "#06b6d4",
+        slate: {
+          50: "#f8fafc",
+          100: "#f1f5f9",
+          200: "#e2e8f0",
+          300: "#cbd5e1",
+          400: "#94a3b8",
+          500: "#64748b",
+          600: "#475569",
+          700: "#334155",
+          800: "#1e293b",
+          900: "#0f172a",
         },
       },
       fontFamily: {
         outfit: ["var(--font-outfit)", "sans-serif"],
       },
-      animation: {
-        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-        'glow': 'glow 2s ease-in-out infinite alternate',
+      boxShadow: {
+        'web': '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)',
+        'web-lg': '0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)',
+        'web-xl': '0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)',
       },
-      keyframes: {
-        glow: {
-          '0%': { boxShadow: '0 0 5px rgba(0, 239, 139, 0.2)' },
-          '100%': { boxShadow: '0 0 20px rgba(0, 239, 139, 0.6)' },
-        }
+      borderRadius: {
+        '3xl': '1.5rem',
+        '4xl': '2rem',
+        '5xl': '2.5rem',
       }
     },
   },
