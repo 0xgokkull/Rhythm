@@ -12,7 +12,6 @@ import {
   ChevronLeft,
   Zap
 } from 'lucide-react';
-import { useState } from 'react';
 
 const menuItems = [
   { icon: LayoutDashboard, label: 'Dashboard', href: '/dashboard' },
@@ -27,25 +26,22 @@ export default function Sidebar({ isCollapsed, setIsCollapsed }: any) {
 
   return (
     <aside 
-      style={{ '--sidebar-width': isCollapsed ? '96px' : '320px' } as any}
-      className={`fixed top-0 left-0 h-screen bg-white border-r border-slate-50 transition-all duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] flex flex-col z-50 ${
-        isCollapsed ? 'w-24' : 'w-80'
+      className={`fixed top-0 left-0 h-screen bg-white border-r border-slate-100 transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] flex flex-col z-50 ${
+        isCollapsed ? 'w-[72px]' : 'w-[240px]'
       }`}
     >
-      {/* Logo Section */}
-      <div className={`h-24 flex items-center border-b border-slate-50 mb-6 transition-all duration-700 ${isCollapsed ? 'justify-center px-0' : 'px-8'}`}>
-        <Link href="/dashboard" className="flex items-center gap-4 group">
-          <motion.div 
-            whileHover={{ scale: 1.1, rotate: 5 }}
-            className="w-12 h-12 bg-gradient-to-br from-primary to-secondary rounded-2xl flex items-center justify-center text-white shadow-xl shadow-primary/20 shrink-0"
-          >
-            <Zap className="w-7 h-7 fill-current" />
-          </motion.div>
+      {/* Logo */}
+      <div className={`h-16 flex items-center shrink-0 border-b border-slate-100 transition-all duration-500 ${isCollapsed ? 'justify-center px-0' : 'px-5'}`}>
+        <Link href="/dashboard" className="flex items-center gap-2.5 group">
+          <div className="w-9 h-9 bg-primary rounded-xl flex items-center justify-center text-white shrink-0 group-hover:scale-105 transition-transform">
+            <Zap className="w-4.5 h-4.5 fill-current" />
+          </div>
           {!isCollapsed && (
             <motion.span 
-              initial={{ opacity: 0, x: -10 }}
+              initial={{ opacity: 0, x: -8 }}
               animate={{ opacity: 1, x: 0 }}
-              className="text-3xl font-black tracking-tighter text-slate-900"
+              transition={{ duration: 0.3 }}
+              className="text-lg font-black tracking-tight text-slate-900"
             >
               Rhythm
             </motion.span>
@@ -53,55 +49,49 @@ export default function Sidebar({ isCollapsed, setIsCollapsed }: any) {
         </Link>
       </div>
 
-      {/* Navigation Links */}
-      <nav className="flex-1 px-4 space-y-2">
-        {menuItems.map((item, index) => {
+      {/* Navigation */}
+      <nav className={`flex-1 py-4 space-y-1 ${isCollapsed ? 'px-2' : 'px-3'}`}>
+        {menuItems.map((item) => {
           const isActive = pathname === item.href;
           return (
-            <motion.div
+            <Link 
               key={item.href}
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: index * 0.1 }}
+              href={item.href}
+              className={`flex items-center gap-3 rounded-xl transition-all duration-200 group relative ${
+                isCollapsed ? 'justify-center p-2.5' : 'px-3 py-2.5'
+              } ${
+                isActive 
+                  ? 'bg-primary text-white shadow-md shadow-primary/20' 
+                  : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
+              }`}
             >
-              <Link 
-                href={item.href}
-                className={`${
-                  isActive ? 'nav-item-active shadow-flow-ambient' : 'nav-item'
-                } transition-all duration-500 ${isCollapsed ? 'justify-center px-0 gap-0' : 'px-8 gap-4'}`}
-              >
-                <div className="flex items-center justify-center w-6 h-6 shrink-0">
-                  <item.icon className={`w-6 h-6 ${isActive ? 'text-primary' : 'group-hover:text-primary transition-colors'}`} />
+              <item.icon className={`w-[18px] h-[18px] shrink-0 ${isActive ? 'text-white' : 'text-slate-400 group-hover:text-primary'} transition-colors`} />
+              {!isCollapsed && (
+                <span className="text-[13px] font-semibold tracking-tight">
+                  {item.label}
+                </span>
+              )}
+              {/* Tooltip on collapsed */}
+              {isCollapsed && (
+                <div className="absolute left-full ml-2 px-2.5 py-1 bg-slate-900 text-white text-xs font-bold rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap z-50">
+                  {item.label}
                 </div>
-                {!isCollapsed && (
-                  <motion.span 
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    className="text-sm tracking-tight"
-                  >
-                    {item.label}
-                  </motion.span>
-                )}
-                {isActive && !isCollapsed && (
-                  <motion.div 
-                    layoutId="active-indicator"
-                    className="ml-auto w-2 h-2 rounded-full bg-primary shadow-flow-glow" 
-                  />
-                )}
-              </Link>
-            </motion.div>
+              )}
+            </Link>
           );
         })}
       </nav>
 
-      {/* Footer / Toggle */}
-      <div className={`p-6 border-t border-slate-50 transition-all duration-700 ${isCollapsed ? 'px-4' : 'px-6'}`}>
+      {/* Collapse Toggle */}
+      <div className={`shrink-0 border-t border-slate-100 ${isCollapsed ? 'p-2' : 'p-3'}`}>
         <button 
           onClick={() => setIsCollapsed(!isCollapsed)}
-          className={`w-full flex items-center rounded-3xl hover:bg-slate-50 transition-all duration-300 text-slate-400 group ${isCollapsed ? 'justify-center p-4 px-0' : 'gap-4 p-4'}`}
+          className={`w-full flex items-center rounded-xl hover:bg-slate-50 transition-all duration-200 text-slate-400 hover:text-slate-600 group ${
+            isCollapsed ? 'justify-center p-2.5' : 'gap-2.5 px-3 py-2.5'
+          }`}
         >
-          <ChevronLeft className={`w-6 h-6 transition-transform duration-500 group-hover:text-primary shrink-0 ${isCollapsed ? 'rotate-180' : ''}`} />
-          {!isCollapsed && <span className="text-sm font-bold tracking-tight group-hover:text-slate-600 transition-colors">Minimize View</span>}
+          <ChevronLeft className={`w-[18px] h-[18px] transition-transform duration-300 shrink-0 ${isCollapsed ? 'rotate-180' : ''}`} />
+          {!isCollapsed && <span className="text-[13px] font-semibold tracking-tight">Collapse</span>}
         </button>
       </div>
     </aside>
