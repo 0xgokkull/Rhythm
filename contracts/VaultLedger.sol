@@ -3,8 +3,7 @@ pragma solidity ^0.8.20;
 
 /**
  * @title VaultLedger
- * @dev State Authority Layer. Authoritative source of truth for user vault balances.
- * Protects balances with reentrancy guards and strict access control.
+ * @dev Authoritative accounting layer. Enforces treasury balance consistency.
  */
 contract VaultLedger {
     struct Vault {
@@ -16,17 +15,15 @@ contract VaultLedger {
 
     mapping(address => Vault) public accountVaults;
     address public executionEngine;
-    bool private _locked;
+    bool    private _locked;
 
-    // Access control: only ExecutionEngine can update balances
     modifier onlyEngine() {
-        require(msg.sender == executionEngine, "Unauthorized: Only ExecutionEngine can update.");
+        require(msg.sender == executionEngine, "Only ExecutionEngine");
         _;
     }
 
-    // Protection against reentrancy
     modifier nonReentrant() {
-        require(!_locked, "Reentrancy detected.");
+        require(!_locked, "Reentrant call");
         _locked = true;
         _;
         _locked = false;
@@ -34,40 +31,38 @@ contract VaultLedger {
 
     event VaultUpdated(address indexed user, uint256 savings, uint256 bills, uint256 spend);
 
-    /**
-     * @dev Initialize with ExecutionEngine address.
-     */
     constructor(address _executionEngine) {
         executionEngine = _executionEngine;
     }
 
-    /**
-     * @dev Core state mutation. Increases balances.
-     */
     function updateBalances(
-        address _user, 
-        uint256 _savingsInc, 
-        uint256 _billsInc, 
+        address _user,
+        uint256 _savingsInc,
+        uint256 _billsInc,
         uint256 _spendInc
-    ) 
-        external 
-        onlyEngine 
-        nonReentrant 
-    {
+    ) external onlyEngine nonReentrant {
         Vault storage v = accountVaults[_user];
-        v.savings += _savingsInc;
-        v.bills += _billsInc;
-        v.spend += _spendInc;
+        v.savings    += _savingsInc;
+        v.bills      += _billsInc;
+        v.spend      += _spendInc;
         v.lastUpdated = block.timestamp;
-
         emit VaultUpdated(_user, v.savings, v.bills, v.spend);
     }
 
-    /**
-     * @dev Getter for user balances.
-     */
-    function getBalances(address _user) external view returns (uint256, uint256, uint256, uint256) {
+    function getBalances(address _user)
+        external view
+        returns (uint256, uint256, uint256, uint256)
+    {
         Vault memory v = accountVaults[_user];
         return (v.savings, v.bills, v.spend, v.lastUpdated);
+    }
+
+    /**
+     * @dev Total tracked balance for a user across all vaults.
+     * Used by ExecutionEngine to enforce treasury >= vault total.
+     */
+    function getTotalBalance(address _user) external view returns (uint256) {
+        Vault memory v = accountVaults[_user];
+        return v.savings + v.bills + v.spend;
     }
 }
