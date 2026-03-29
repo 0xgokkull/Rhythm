@@ -22,7 +22,7 @@ export default function TopHeader({ isCollapsed }: { isCollapsed?: boolean }) {
       {/* Left: Title */}
       <div className="flex items-center gap-4">
         <h2 className="text-base font-bold text-slate-900 tracking-tight">{getTitle()}</h2>
-        <span className="text-[10px] text-slate-400 font-medium uppercase tracking-widest">/ Rhythm</span>
+        <span className="text-[12px] text-slate-400 font-bold uppercase tracking-widest">/ Rhythm</span>
       </div>
 
       {/* Right: Actions */}
@@ -30,7 +30,7 @@ export default function TopHeader({ isCollapsed }: { isCollapsed?: boolean }) {
         {/* Testnet Badge */}
         <div className="flex items-center gap-1.5 px-2.5 py-1 bg-amber-50 border border-amber-200/60 rounded-lg">
           <div className="w-1.5 h-1.5 bg-amber-400 rounded-full" />
-          <span className="text-[9px] text-amber-700 font-bold uppercase tracking-widest">Testnet</span>
+          <span className="text-[11px] text-amber-700 font-bold uppercase tracking-widest">Testnet</span>
         </div>
 
         {/* Search */}
@@ -56,7 +56,7 @@ export default function TopHeader({ isCollapsed }: { isCollapsed?: boolean }) {
         <div className="flex items-center gap-2.5 cursor-pointer group">
           <div className="text-right hidden sm:block">
             <p className="text-sm font-bold text-slate-900 group-hover:text-primary transition-colors leading-none">Gokul</p>
-            <p className="text-[10px] text-slate-400 font-medium leading-none mt-1">Flow Testnet</p>
+            <p className="text-[11px] text-slate-400 font-bold leading-none mt-1">Flow Testnet</p>
           </div>
           <div className="w-9 h-9 rounded-xl bg-primary/5 border border-primary/10 flex items-center justify-center">
             <User className="w-4.5 h-4.5 text-primary" />

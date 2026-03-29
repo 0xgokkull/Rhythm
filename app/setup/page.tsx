@@ -87,8 +87,8 @@ export default function SetupPage() {
               <div className="flex items-center justify-between mb-3">
                 <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">Test Deposit Amount</label>
                 <div className="flex items-center gap-1.5 px-2.5 py-1 bg-amber-50 border border-amber-200 rounded-md">
-                  <Info className="w-3 h-3 text-amber-600" />
-                  <span className="text-[9px] text-amber-700 font-bold uppercase tracking-widest">Demo / Testnet</span>
+                  <Info className="w-3.5 h-3.5 text-amber-600" />
+                  <span className="text-[11px] text-amber-700 font-bold uppercase tracking-widest">Demo / Testnet</span>
                 </div>
               </div>
               <div className="relative">
@@ -123,10 +123,10 @@ export default function SetupPage() {
                     }`}
                   >
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-bold text-slate-900">{preset.label}</span>
+                      <span className="text-base font-black text-slate-900">{preset.label}</span>
                       {activePreset === preset.id && <CheckCircle2 className="w-4 h-4 text-primary" />}
                     </div>
-                    <p className="text-[10px] text-slate-500 font-medium mb-3">{preset.desc}</p>
+                    <p className="text-[12px] text-slate-500 font-medium mb-3">{preset.desc}</p>
                     <div className="flex gap-1 h-2 rounded-full overflow-hidden">
                       <div className="bg-primary rounded-full" style={{ width: `${preset.savings}%` }} />
                       <div className="bg-secondary rounded-full" style={{ width: `${preset.bills}%` }} />
@@ -174,7 +174,7 @@ export default function SetupPage() {
                 <h3 className="text-xs font-bold uppercase tracking-widest text-white/60 mb-5">
                   Outcome Preview
                 </h3>
-                <p className="text-[10px] text-white/40 font-bold uppercase tracking-widest mb-4">From {numDeposit} FLOW deposit</p>
+                <p className="text-[12px] text-white/40 font-black uppercase tracking-widest mb-4">From {numDeposit} FLOW deposit</p>
                 
                 <div className="space-y-4">
                   <OutcomeRow icon={PiggyBank} label="Savings" pct={savings} amount={savingsAmt} />
@@ -183,12 +183,12 @@ export default function SetupPage() {
                 </div>
                 
                 <div className="mt-5 pt-4 border-t border-white/10 flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-[10px] text-white/40 font-bold uppercase tracking-widest">
-                    <Clock className="w-3 h-3" />
+                  <div className="flex items-center gap-2 text-[12px] text-white/40 font-black uppercase tracking-widest">
+                    <Clock className="w-3.5 h-3.5" />
                     On every deposit
                   </div>
-                  <div className="flex items-center gap-2 text-[10px] text-white/40 font-bold">
-                    <Zap className="w-3 h-3 fill-current text-secondary" />
+                  <div className="flex items-center gap-2 text-[12px] text-white/40 font-black tracking-widest uppercase">
+                    <Zap className="w-3.5 h-3.5 fill-current text-secondary" />
                     Gasless
                   </div>
                 </div>
@@ -206,7 +206,7 @@ export default function SetupPage() {
               </div>
               <div className="mt-4 pt-3 border-t border-slate-100 flex items-center gap-2">
                 <Zap className="w-3 h-3 text-primary fill-current" />
-                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Powered by Flow · Gasless</span>
+                <span className="text-[12px] text-slate-400 font-black uppercase tracking-widest">Powered by Flow · Gasless</span>
               </div>
             </motion.div>
           </div>
@@ -239,8 +239,8 @@ function OutcomeRow({ icon: Icon, label, pct, amount }: any) {
         <span className="text-base font-semibold text-white/90">{label}</span>
       </div>
       <div className="text-right">
-        <span className="text-xl font-black">{pct}%</span>
-        <p className="text-xs text-white/50 font-medium">= {amount} FLOW</p>
+        <span className="text-2xl font-black">{pct}%</span>
+        <p className="text-sm text-white/50 font-medium tracking-tight">= {amount} FLOW</p>
       </div>
     </div>
   );

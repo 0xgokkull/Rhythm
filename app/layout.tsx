@@ -4,6 +4,7 @@ import { Outfit } from "next/font/google";
 import "./globals.css";
 import Sidebar from "@/components/Sidebar";
 import TopHeader from "@/components/TopHeader";
+import OnboardingOverlay from "@/components/OnboardingOverlay";
 import { useState } from "react";
 import { usePathname } from "next/navigation";
 import { SimulationProvider } from "@/context/SimulationContext";
@@ -27,6 +28,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={`${outfit.variable} font-outfit antialiased`}>
         <SimulationProvider>
+          {!isLanding && <OnboardingOverlay />}
           <div className="flex h-screen bg-slate-50 overflow-hidden">
             {!isLanding && <Sidebar isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />}
             

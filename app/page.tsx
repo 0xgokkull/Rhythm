@@ -3,164 +3,189 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowRight, Loader2, Zap, Shield, Mail, Lock, CheckCircle2 } from 'lucide-react';
+import { 
+  ArrowRight, 
+  Loader2, 
+  Zap, 
+  Shield, 
+  CheckCircle2, 
+  Wallet,
+  Coins,
+  Cpu,
+  RefreshCw,
+  TrendingUp
+} from 'lucide-react';
 
-export default function AuthPage() {
+export default function LandingPage() {
   const router = useRouter();
-  const [step, setStep] = useState<'auth' | 'loading'>('auth');
-  const [email, setEmail] = useState('');
+  const [isConnecting, setIsConnecting] = useState(false);
 
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault();
-    setStep('loading');
+  const handleConnect = () => {
+    setIsConnecting(true);
     setTimeout(() => {
       router.push('/dashboard');
-    }, 2500);
+    }, 2000);
+  };
+
+  const containerVariants: any = {
+    hidden: { opacity: 0 },
+    visible: { 
+      opacity: 1,
+      transition: { staggerChildren: 0.1, delayChildren: 0.1 }
+    }
   };
 
   const itemVariants: any = {
-    hidden: { opacity: 0, y: 15 },
+    hidden: { opacity: 0, y: 30 },
     visible: { 
       opacity: 1, y: 0,
-      transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] }
+      transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] }
     }
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center relative overflow-hidden bg-white">
+    <div className="min-h-screen bg-white overflow-x-hidden selection:bg-primary/10 selection:text-primary">
       
-      {/* Subtle ambient gradients */}
-      <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-primary/5 rounded-full blur-[100px] -translate-y-1/3 translate-x-1/3" />
-      <div className="absolute bottom-0 left-0 w-[300px] h-[300px] bg-secondary/5 rounded-full blur-[100px] translate-y-1/3 -translate-x-1/3" />
-      
-      <AnimatePresence mode="wait">
-        {step === 'auth' && (
-          <motion.div
-            key="auth"
+      {/* Background Accents */}
+      <div className="fixed inset-0 pointer-events-none">
+        <div className="absolute top-[10%] left-[5%] w-[500px] h-[500px] bg-emerald-50 rounded-full blur-[120px] opacity-60" />
+        <div className="absolute bottom-[10%] right-[5%] w-[400px] h-[400px] bg-secondary/10 rounded-full blur-[120px] opacity-40" />
+      </div>
+
+      {/* Header/Nav */}
+      <nav className="relative z-50 h-20 px-8 flex items-center justify-between pointer-events-none">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center text-white shadow-lg shadow-primary/20">
+            <Zap className="w-5 h-5 fill-current" />
+          </div>
+          <span className="text-2xl font-black tracking-tighter text-slate-900">Rhythm</span>
+        </div>
+      </nav>
+
+      {/* Hero Section */}
+      <main className="relative z-10 pt-16 pb-32">
+        <div className="wide-container">
+          <motion.div 
+            variants={containerVariants}
             initial="hidden"
             animate="visible"
-            exit={{ opacity: 0, scale: 0.98 }}
-            className="w-full max-w-md px-6 relative z-10"
+            className="max-w-4xl mx-auto text-center"
           >
-            {/* Logo */}
-            <motion.div variants={itemVariants} className="text-center mb-10">
-              <div className="inline-flex items-center justify-center w-14 h-14 bg-primary rounded-2xl text-white shadow-lg shadow-primary/20 mb-6">
-                <Zap className="w-7 h-7 fill-current" />
-              </div>
-              <h1 className="text-3xl font-black text-slate-900 tracking-tight mb-2">Welcome to Rhythm</h1>
-              <p className="text-sm text-slate-500 font-medium">
-                Your money runs on autopilot. Powered by <span className="text-primary font-bold">Flow</span>.
-              </p>
+            {/* Badge */}
+            <motion.div variants={itemVariants} className="inline-flex items-center gap-2 px-3 py-1 bg-primary/5 border border-primary/10 rounded-full mb-8">
+              <span className="w-2 h-2 bg-primary rounded-full animate-pulse" />
+              <span className="text-[12px] font-black text-primary uppercase tracking-widest">Built on Flow Testnet</span>
             </motion.div>
 
-            {/* Login Form */}
-            <motion.form variants={itemVariants} onSubmit={handleLogin} className="space-y-4">
-              <div className="space-y-3">
-                <div className="relative">
-                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="Email address"
-                    className="w-full h-13 bg-slate-50 border border-slate-200 rounded-xl pl-11 pr-4 text-sm font-semibold text-slate-900 focus:outline-none focus:border-primary/40 focus:bg-white focus:ring-4 focus:ring-primary/5 transition-all placeholder:text-slate-400"
-                    required
-                  />
-                </div>
-                <div className="relative">
-                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                  <input
-                    type="password"
-                    placeholder="Password"
-                    className="w-full h-13 bg-slate-50 border border-slate-200 rounded-xl pl-11 pr-4 text-sm font-semibold text-slate-900 focus:outline-none focus:border-primary/40 focus:bg-white focus:ring-4 focus:ring-primary/5 transition-all placeholder:text-slate-400"
-                    required
-                  />
-                </div>
-              </div>
+            {/* Title */}
+            <motion.h1 variants={itemVariants} className="text-7xl md:text-9xl font-black text-slate-900 tracking-tighter leading-[0.85] mb-8">
+              Money on <br />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-emerald-600">Autopilot.</span>
+            </motion.h1>
 
-              <button
-                type="submit"
-                className="w-full h-12 bg-primary text-white rounded-xl font-bold text-sm flex items-center justify-center gap-2 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-primary/20 transition-all duration-300 active:scale-[0.98] group"
-              >
-                Get Started
-                <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
-              </button>
-            </motion.form>
-
-            <motion.div variants={itemVariants} className="mt-6 space-y-4">
-              <div className="relative flex items-center gap-3">
-                <div className="flex-1 h-px bg-slate-100" />
-                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">no wallet needed</span>
-                <div className="flex-1 h-px bg-slate-100" />
-              </div>
-              
-              <div className="grid grid-cols-3 gap-3">
-                <Feature icon={Shield} label="Non-custodial" />
-                <Feature icon={Zap} label="Gasless" />
-                <Feature icon={CheckCircle2} label="Auto-retry" />
-              </div>
-            </motion.div>
-
-            <motion.p variants={itemVariants} className="text-center text-[10px] text-slate-400 font-medium mt-8 leading-relaxed">
-              A wallet is created automatically for you on the Flow network.<br />
-              No extensions. No gas fees. No friction.
+            {/* Description */}
+            <motion.p variants={itemVariants} className="text-xl md:text-2xl text-slate-500 font-medium max-w-2xl mx-auto mb-12 leading-relaxed">
+              The first high-fidelity simulation of institutional-grade DeFi automation. 
+              Setup your split rules, deposit FLOW, and watch the engine handle the rest.
             </motion.p>
-          </motion.div>
-        )}
 
-        {step === 'loading' && (
-          <motion.div
-            key="loading"
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0 }}
-            className="flex flex-col items-center gap-6"
-          >
-            <div className="relative">
-              <Loader2 className="w-12 h-12 text-primary animate-spin" />
-            </div>
-            <div className="text-center space-y-1">
-              <h3 className="text-lg font-bold text-slate-900 tracking-tight">Creating your account...</h3>
-              <p className="text-xs text-slate-500">Setting up wallet on Flow • No gas fees</p>
-            </div>
-            <div className="flex items-center gap-4 mt-4">
-              <Step label="Wallet" done />
-              <div className="w-6 h-px bg-slate-200" />
-              <Step label="Vaults" done />
-              <div className="w-6 h-px bg-slate-200" />
-              <Step label="Autopilot" active />
-            </div>
+            {/* CTA Area */}
+            <motion.div variants={itemVariants} className="flex flex-col items-center gap-6">
+              <button
+                onClick={handleConnect}
+                disabled={isConnecting}
+                className="group relative h-20 px-12 bg-primary text-white rounded-2xl font-black text-xl flex items-center justify-center gap-4 hover:-translate-y-1 hover:shadow-2xl hover:shadow-primary/30 transition-all duration-300 disabled:opacity-70 disabled:hover:translate-y-0 active:scale-95"
+              >
+                {isConnecting ? (
+                  <>
+                    <Loader2 className="w-6 h-6 animate-spin" />
+                    Connecting to Flow...
+                  </>
+                ) : (
+                  <>
+                    <Wallet className="w-7 h-7" />
+                    Connect Wallet
+                    <ArrowRight className="w-6 h-6 group-hover:translate-x-1 transition-transform" />
+                  </>
+                )}
+              </button>
+              
+              <div className="flex items-center gap-8">
+                <div className="flex items-center gap-2">
+                  <Shield className="w-4 h-4 text-emerald-500" />
+                  <span className="text-sm text-slate-400 font-black uppercase tracking-widest">Flow Native</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Cpu className="w-4 h-4 text-primary" />
+                  <span className="text-sm text-slate-400 font-black uppercase tracking-widest">Automated Splits</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <RefreshCw className="w-4 h-4 text-secondary" />
+                  <span className="text-sm text-slate-400 font-black uppercase tracking-widest">Auto-Retry Layer</span>
+                </div>
+              </div>
+            </motion.div>
           </motion.div>
-        )}
-      </AnimatePresence>
+
+          {/* Feature Grid */}
+          <motion.div 
+            variants={containerVariants}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-32"
+          >
+            <FeatureCard 
+              icon={Coins}
+              title="Deposit Detected"
+              desc="System monitors your Flow account and detects deposits in real-time."
+            />
+            <FeatureCard 
+              icon={RefreshCw}
+              title="On-Chain Splitting"
+              desc="Automated allocation into Savings, Bills, and Spend vaults per your rules."
+            />
+            <FeatureCard 
+              icon={TrendingUp}
+              title="Engine Resilience"
+              desc="Built-in retry logic ensures execution even during network congestion."
+            />
+          </motion.div>
+        </div>
+      </main>
 
       {/* Footer */}
-      <div className="absolute bottom-6 flex items-center gap-2 text-[10px] text-slate-300 font-bold">
-        <Zap className="w-3 h-3 fill-current text-primary" />
-        <span>Scheduled on-chain · Gasless execution · Powered by Flow</span>
-      </div>
+      <footer className="py-12 border-t border-slate-50">
+        <div className="wide-container flex flex-col md:flex-row items-center justify-between gap-6">
+          <div className="flex items-center gap-2 text-slate-400 text-sm font-black uppercase tracking-widest">
+            <Zap className="w-4 h-4 text-primary fill-current" />
+            <span>Rhythm Autopilot · Institutional DeFi</span>
+          </div>
+          <p className="text-slate-300 text-[12px] font-black uppercase tracking-[0.25em]">
+            Powered by Flow Blockchain · Gasless Execution
+          </p>
+        </div>
+      </footer>
     </div>
   );
 }
 
-function Feature({ icon: Icon, label }: any) {
-  return (
-    <div className="flex flex-col items-center gap-1.5 p-3 bg-slate-50 rounded-xl border border-slate-100">
-      <Icon className="w-4 h-4 text-primary" />
-      <span className="text-[10px] text-slate-500 font-bold">{label}</span>
-    </div>
-  );
-}
+function FeatureCard({ icon: Icon, title, desc }: any) {
+  const itemVariants: any = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { 
+      opacity: 1, y: 0,
+      transition: { duration: 0.6, ease: [0.16, 1, 0.3, 1] }
+    }
+  };
 
-function Step({ label, done, active }: any) {
   return (
-    <div className="flex items-center gap-2">
-      <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[8px] font-bold ${
-        done ? 'bg-primary text-white' : active ? 'bg-primary/10 text-primary border border-primary/30' : 'bg-slate-100 text-slate-400'
-      }`}>
-        {done ? <CheckCircle2 className="w-3 h-3" /> : ''}
+    <motion.div variants={itemVariants} className="card-web p-8 text-left group">
+      <div className="w-14 h-14 bg-slate-50 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+        <Icon className="w-7 h-7 text-primary" />
       </div>
-      <span className={`text-[10px] font-bold ${done ? 'text-primary' : active ? 'text-slate-900' : 'text-slate-400'}`}>{label}</span>
-    </div>
+      <h3 className="text-2xl font-black text-slate-900 tracking-tight mb-3">{title}</h3>
+      <p className="text-lg text-slate-500 font-medium leading-relaxed leading-relaxed">{desc}</p>
+    </motion.div>
   );
 }
