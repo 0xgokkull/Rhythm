@@ -1,56 +1,63 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { 
-  ArrowRight, 
-  ChevronLeft, 
-  PiggyBank, 
-  Receipt, 
-  ShoppingCart, 
-  Sparkles,
+  PiggyBank,
+  Receipt,
+  ShoppingBag,
   Zap,
-  Target,
-  BarChart4
+  ArrowRight,
+  Settings2,
+  CheckCircle2,
+  Clock,
+  Info
 } from 'lucide-react';
 import PageTransition from '@/components/PageTransition';
+import { useSimulation } from '@/context/SimulationContext';
+
+const PRESETS = [
+  { id: 'conservative', label: 'Conservative', desc: 'Low risk, steady growth', savings: 20, bills: 50, spend: 30 },
+  { id: 'balanced', label: 'Balanced', desc: 'Recommended for most users', savings: 30, bills: 40, spend: 30 },
+  { id: 'aggressive', label: 'Aggressive', desc: 'Maximize your savings', savings: 40, bills: 35, spend: 25 },
+];
 
 export default function SetupPage() {
-  const router = useRouter();
-  const [salary, setSalary] = useState('5,000');
-  const [savings, setSavings] = useState(30);
-  const [bills, setBills] = useState(40);
+  const sim = useSimulation();
+  const [deposit, setDeposit] = useState(sim.salary.toString());
+  const [activePreset, setActivePreset] = useState('balanced');
+  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [savings, setSavings] = useState(sim.rules.savings);
+  const [bills, setBills] = useState(sim.rules.bills);
+  const [saved, setSaved] = useState(false);
+
+  const spend = 100 - savings - bills;
+  const numDeposit = parseFloat(deposit) || 0;
+  const savingsAmt = parseFloat(((numDeposit * savings) / 100).toFixed(1));
+  const billsAmt = parseFloat(((numDeposit * bills) / 100).toFixed(1));
+  const spendAmt = parseFloat((numDeposit - savingsAmt - billsAmt).toFixed(1));
+
+  const selectPreset = (preset: typeof PRESETS[0]) => {
+    setActivePreset(preset.id);
+    setSavings(preset.savings);
+    setBills(preset.bills);
+  };
+
+  const handleSave = () => {
+    sim.setRules({ savings, bills, spend });
+    sim.setSalary(numDeposit);
+    setSaved(true);
+    setTimeout(() => setSaved(false), 2000);
+  };
 
   const containerVariants: any = {
     hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1,
-        delayChildren: 0.1
-      }
-    }
+    visible: { opacity: 1, transition: { staggerChildren: 0.08 } }
   };
 
   const itemVariants: any = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { 
-      opacity: 1, 
-      y: 0,
-      transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] }
-    }
-  };
-
-  const spending = 100 - savings - bills;
-
-  const calculateAmount = (percent: number) => {
-    const num = parseFloat(salary.replace(/[^0-9.]/g, '')) || 0;
-    const val = (num * (percent / 100)).toLocaleString('en-US', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    });
-    return `${val} FLOW`;
+    hidden: { opacity: 0, y: 12 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.4, ease: [0.16, 1, 0.3, 1] } }
   };
 
   return (
@@ -59,224 +66,191 @@ export default function SetupPage() {
         variants={containerVariants}
         initial="hidden"
         animate="visible"
-        className="space-y-12"
+        className="space-y-6"
       >
-        <header className="flex items-center justify-between pb-8 border-b border-slate-50">
+        {/* Header */}
+        <motion.header variants={itemVariants} className="flex items-center justify-between pb-5 border-b border-slate-100">
           <div>
-            <h1 className="text-4xl font-black text-slate-900 tracking-tighter mb-1">Configure Autopilot</h1>
-            <p className="text-lg text-slate-500 font-medium tracking-tight">Define your monthly institutional flow distribution protocol.</p>
+            <h1 className="text-2xl font-black text-slate-900 tracking-tight mb-0.5">Configure Autopilot</h1>
+            <p className="text-xs text-slate-500 font-medium">Set your split rules. Funds auto-allocate on every deposit.</p>
           </div>
-          <button 
-            onClick={() => router.back()} 
-            className="p-4 bg-white border border-slate-100 rounded-[28px] hover:shadow-xl hover:bg-slate-50 transition-all duration-300 flex items-center gap-3 text-slate-500 font-black text-sm uppercase tracking-widest"
-          >
-            <ChevronLeft className="w-5 h-5" />
-            Control Center
-          </button>
-        </header>
+        </motion.header>
 
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-16 items-start">
-          
-          {/* Left Column: Configuration Controls */}
-          <motion.div variants={itemVariants} className="space-y-10">
-            <div className="card-web p-12 space-y-12 group/config">
-              {/* Salary Input */}
-              <div className="space-y-6">
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] px-2">Institutional Inflow (Monthly)</label>
-                <div className="relative group/input">
-                  <span className="absolute left-10 top-1/2 -translate-y-1/2 text-2xl font-black text-slate-200 group-focus-within/input:text-primary transition-colors duration-500">FLOW</span>
-                  <input 
-                    type="text" 
-                    value={salary} 
-                    onChange={(e) => setSalary(e.target.value)}
-                    className="w-full bg-slate-50 border-2 border-slate-50 rounded-[40px] pl-28 pr-10 py-10 text-6xl font-black text-slate-900 focus:outline-none focus:border-primary/30 focus:bg-white transition-all text-center tracking-tighter shadow-sm"
-                    placeholder="0.00"
-                  />
+        {/* Two-column layout */}
+        <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
+
+          {/* LEFT COLUMN — Config (7 cols) */}
+          <div className="xl:col-span-7 space-y-5">
+
+            {/* Deposit Input */}
+            <motion.div variants={itemVariants} className="card-web p-6">
+              <div className="flex items-center justify-between mb-3">
+                <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">Test Deposit Amount</label>
+                <div className="flex items-center gap-1.5 px-2.5 py-1 bg-amber-50 border border-amber-200 rounded-md">
+                  <Info className="w-3 h-3 text-amber-600" />
+                  <span className="text-[9px] text-amber-700 font-bold uppercase tracking-widest">Demo / Testnet</span>
                 </div>
               </div>
-
-              {/* Distribution Sliders */}
-              <div className="space-y-8 pt-4">
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] px-2">Protocol Distribution Weighting (%)</label>
-                
-                <RuleSliderWeb 
-                  label="Wealth Vault" 
-                  icon={<PiggyBank className="w-6 h-6" />} 
-                  value={savings} 
-                  onChange={setSavings} 
-                  color="text-primary"
-                  accent="accent-primary"
-                  amount={calculateAmount(savings)}
+              <div className="relative">
+                <input 
+                  type="number" value={deposit} onChange={(e) => setDeposit(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-5 py-4 text-2xl font-black text-slate-900 focus:outline-none focus:border-primary/40 focus:bg-white focus:ring-4 focus:ring-primary/5 transition-all tracking-tight pr-24"
+                  placeholder="500"
                 />
-
-                <RuleSliderWeb 
-                  label="Operational" 
-                  icon={<Receipt className="w-6 h-6" />} 
-                  value={bills} 
-                  onChange={setBills} 
-                  color="text-secondary"
-                  accent="accent-secondary"
-                  amount={calculateAmount(bills)}
-                />
-
-                <div className="p-8 bg-slate-50 rounded-[32px] flex items-center justify-between border border-slate-50 opacity-60 hover:opacity-100 transition-opacity duration-500 group/spending">
-                  <div className="flex items-center gap-5">
-                    <div className="p-4 bg-white rounded-2xl text-slate-400 group-hover/spending:text-primary transition-colors duration-500">
-                      <ShoppingCart className="w-6 h-6" />
-                    </div>
-                    <div>
-                      <p className="font-black text-slate-900 text-lg tracking-tight">Spending Residual</p>
-                      <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest leading-none mt-1">Automatic remainder</p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-3xl font-black text-slate-900 tracking-tighter">{spending}%</p>
-                    <p className="text-xs text-slate-500 font-black uppercase tracking-tight">{calculateAmount(spending)}</p>
-                  </div>
-                </div>
+                <span className="absolute right-5 top-1/2 -translate-y-1/2 text-sm font-bold text-slate-400 uppercase tracking-widest">FLOW</span>
               </div>
+            </motion.div>
 
-              {/* Action Button */}
-              <button
-                onClick={() => router.push('/dashboard')}
-                className="btn-web-primary w-full h-24 text-2xl font-black group shadow-3xl shadow-primary/20 tracking-tighter uppercase"
-              >
-                Activate Protocol
-                <Zap className="w-8 h-8 fill-current group-hover:scale-125 group-hover:rotate-12 transition-transform duration-500" />
-              </button>
-            </div>
-          </motion.div>
-
-          {/* Right Column: High-Scale Visualizer */}
-          <motion.div variants={itemVariants} className="space-y-10 sticky top-30">
-            <div className="card-web p-12 bg-slate-900 text-white border-none shadow-3xl shadow-slate-900/60 relative overflow-hidden h-[820px] flex flex-col group/visualizer">
-              <motion.div 
-                animate={{ scale: [1, 1.2, 1], rotate: [0, 5, 0], opacity: [0.1, 0.2, 0.1] }}
-                transition={{ duration: 10, repeat: Infinity }}
-                className="absolute top-0 right-0 w-[500px] h-[500px] bg-primary/20 rounded-full blur-[150px]" 
-              />
-              <motion.div 
-                animate={{ scale: [1, 1.1, 1], rotate: [0, -5, 0], opacity: [0.1, 0.15, 0.1] }}
-                transition={{ duration: 8, repeat: Infinity, delay: 1 }}
-                className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-secondary/20 rounded-full blur-[150px]" 
-              />
+            {/* Presets */}
+            <motion.div variants={itemVariants} className="space-y-3">
+              <div className="flex items-center justify-between px-1">
+                <h3 className="text-sm font-bold text-slate-900">Choose a Strategy</h3>
+                <button onClick={() => setShowAdvanced(!showAdvanced)} className="text-xs text-primary font-bold flex items-center gap-1 hover:underline">
+                  <Settings2 className="w-3 h-3" />
+                  {showAdvanced ? 'Hide' : 'Advanced'}
+                </button>
+              </div>
               
-              <div className="relative z-10 flex items-center justify-between mb-16">
-                <div>
-                  <h3 className="text-3xl font-black tracking-tighter">Real-time Visualization</h3>
-                  <p className="text-slate-400 font-bold uppercase text-[10px] tracking-[0.2em] mt-2">Scale Analysis Vector</p>
-                </div>
-                <div className="p-5 bg-white/10 backdrop-blur-md rounded-2xl border border-white/5 shadow-2xl group-hover/visualizer:scale-110 transition-transform duration-700">
-                  <BarChart4 className="w-8 h-8 text-primary" />
-                </div>
+              <div className="grid grid-cols-3 gap-3">
+                {PRESETS.map(preset => (
+                  <button
+                    key={preset.id}
+                    onClick={() => selectPreset(preset)}
+                    className={`p-4 rounded-xl border-2 text-left transition-all duration-300 ${
+                      activePreset === preset.id 
+                        ? 'border-primary bg-primary/5 shadow-md shadow-primary/10' 
+                        : 'border-slate-100 bg-white hover:border-slate-200'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm font-bold text-slate-900">{preset.label}</span>
+                      {activePreset === preset.id && <CheckCircle2 className="w-4 h-4 text-primary" />}
+                    </div>
+                    <p className="text-[10px] text-slate-500 font-medium mb-3">{preset.desc}</p>
+                    <div className="flex gap-1 h-2 rounded-full overflow-hidden">
+                      <div className="bg-primary rounded-full" style={{ width: `${preset.savings}%` }} />
+                      <div className="bg-secondary rounded-full" style={{ width: `${preset.bills}%` }} />
+                      <div className="bg-slate-300 rounded-full" style={{ width: `${100 - preset.savings - preset.bills}%` }} />
+                    </div>
+                  </button>
+                ))}
               </div>
+            </motion.div>
 
-              {/* Wide Visualizer Bar */}
-              <div className="flex-1 flex flex-col gap-12 justify-center relative z-10">
-                <div className="space-y-6">
-                  <div className="flex justify-between text-[10px] font-black uppercase tracking-[0.3em] text-slate-500">
-                    <span>Protocol Distribution Map</span>
-                    <span className="text-primary animate-pulse">Live Protocol Active</span>
+            {/* Advanced Sliders */}
+            {showAdvanced && (
+              <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="space-y-3">
+                <SliderRow label="Savings" icon={<PiggyBank className="w-4 h-4" />} value={savings} onChange={(v: number) => { if (v + bills <= 100) setSavings(v); }} />
+                <SliderRow label="Bills" icon={<Receipt className="w-4 h-4" />} value={bills} onChange={(v: number) => { if (v + savings <= 100) setBills(v); }} />
+                <div className="card-web p-4 flex items-center justify-between bg-slate-50">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-white rounded-lg border border-slate-100"><ShoppingBag className="w-4 h-4 text-slate-400" /></div>
+                    <span className="text-sm font-bold text-slate-600">Spend (remainder)</span>
                   </div>
-                  <div className="h-56 w-full bg-white/5 rounded-[48px] overflow-hidden flex border border-white/10 p-3 shadow-inner">
-                    <motion.div 
-                      layout
-                      initial={{ width: 0 }}
-                      animate={{ width: `${savings}%` }}
-                      transition={{ type: "spring", stiffness: 100, damping: 20 }}
-                      className="h-full bg-gradient-to-br from-primary to-secondary rounded-[36px] flex items-center justify-center relative group/bar cursor-pointer"
-                    >
-                      <div className="absolute inset-0 bg-white/20 opacity-0 group-hover/bar:opacity-100 transition-opacity rounded-[36px]" />
-                      <span className="text-white font-black text-3xl tracking-tighter">{savings}%</span>
-                      {savings > 15 && <div className="absolute -top-12 bg-white text-slate-900 px-4 py-1 rounded-full text-[10px] font-black uppercase whitespace-nowrap opacity-0 group-hover/bar:opacity-100 transition-opacity">Wealth Vault</div>}
-                    </motion.div>
-                    <motion.div 
-                      layout
-                      initial={{ width: 0 }}
-                      animate={{ width: `${bills}%` }}
-                      transition={{ type: "spring", stiffness: 100, damping: 20 }}
-                      className="h-full bg-white rounded-[36px] flex items-center justify-center mx-2 relative group/bar-white cursor-pointer"
-                    >
-                      <div className="absolute inset-0 bg-black/10 opacity-0 group-hover/bar-white:opacity-100 transition-opacity rounded-[36px]" />
-                      <span className="text-slate-900 font-black text-3xl tracking-tighter">{bills}%</span>
-                      {bills > 15 && <div className="absolute -top-12 bg-white text-slate-900 px-4 py-1 rounded-full text-[10px] font-black uppercase whitespace-nowrap opacity-0 group-hover/bar-white:opacity-100 transition-opacity">Operational</div>}
-                    </motion.div>
-                    <motion.div 
-                      layout
-                      initial={{ width: 0 }}
-                      animate={{ width: `${spending}%` }}
-                      transition={{ type: "spring", stiffness: 100, damping: 20 }}
-                      className="h-full bg-white/10 rounded-[36px] flex items-center justify-center relative group/bar-dim cursor-pointer"
-                    >
-                      <div className="absolute inset-0 bg-white/5 opacity-0 group-hover/bar-dim:opacity-100 transition-opacity rounded-[36px]" />
-                      <span className="text-white/40 font-black text-3xl tracking-tighter">{spending}%</span>
-                      {spending > 15 && <div className="absolute -top-12 bg-white text-slate-900 px-4 py-1 rounded-full text-[10px] font-black uppercase whitespace-nowrap opacity-0 group-hover/bar-dim:opacity-100 transition-opacity">Residual</div>}
-                    </motion.div>
+                  <span className="text-lg font-black text-slate-400">{spend}%</span>
+                </div>
+              </motion.div>
+            )}
+
+            {/* Save */}
+            <motion.div variants={itemVariants}>
+              <button 
+                onClick={handleSave}
+                className={`w-full h-12 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all duration-300 active:scale-[0.98] ${
+                  saved ? 'bg-emerald-500 text-white' : 'bg-primary text-white hover:shadow-lg hover:shadow-primary/20 hover:-translate-y-0.5'
+                }`}
+              >
+                {saved ? <><CheckCircle2 className="w-4 h-4" /> Rules Saved</> : <><ArrowRight className="w-4 h-4" /> Save Autopilot Rules</>}
+              </button>
+            </motion.div>
+          </div>
+
+          {/* RIGHT COLUMN — Preview (5 cols) */}
+          <div className="xl:col-span-5 space-y-5 xl:sticky xl:top-8">
+
+            {/* Outcome Preview */}
+            {numDeposit > 0 && (
+              <motion.div variants={itemVariants} className="p-6 bg-primary text-white rounded-3xl shadow-lg shadow-primary/20">
+                <h3 className="text-xs font-bold uppercase tracking-widest text-white/60 mb-5">
+                  Outcome Preview
+                </h3>
+                <p className="text-[10px] text-white/40 font-bold uppercase tracking-widest mb-4">From {numDeposit} FLOW deposit</p>
+                
+                <div className="space-y-4">
+                  <OutcomeRow icon={PiggyBank} label="Savings" pct={savings} amount={savingsAmt} />
+                  <OutcomeRow icon={Receipt} label="Bills" pct={bills} amount={billsAmt} />
+                  <OutcomeRow icon={ShoppingBag} label="Spend" pct={spend} amount={spendAmt} />
+                </div>
+                
+                <div className="mt-5 pt-4 border-t border-white/10 flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-[10px] text-white/40 font-bold uppercase tracking-widest">
+                    <Clock className="w-3 h-3" />
+                    On every deposit
+                  </div>
+                  <div className="flex items-center gap-2 text-[10px] text-white/40 font-bold">
+                    <Zap className="w-3 h-3 fill-current text-secondary" />
+                    Gasless
                   </div>
                 </div>
+              </motion.div>
+            )}
 
-                <div className="grid grid-cols-1 gap-8">
-                  <PreviewDetail label="Wealth Accumulation" val={calculateAmount(savings)} color="bg-primary" />
-                  <PreviewDetail label="Operational Coverage" val={calculateAmount(bills)} color="bg-white" />
-                  <PreviewDetail label="Lifestyle Index" val={calculateAmount(spending)} color="bg-white/20" />
-                </div>
+            {/* How it works */}
+            <motion.div variants={itemVariants} className="card-web p-6">
+              <h4 className="text-sm font-bold text-slate-900 mb-4">How Autopilot Works</h4>
+              <div className="space-y-3">
+                <StepItem num="1" text="Deposit lands in your account" />
+                <StepItem num="2" text="System auto-detects the deposit" />
+                <StepItem num="3" text="Funds split into vaults by your rules" />
+                <StepItem num="4" text="If it fails, retry engine kicks in" />
               </div>
-
-              <div className="mt-auto pt-12 border-t border-white/5 flex items-center gap-6 relative z-10">
-                <div className="w-16 h-16 rounded-[24px] bg-primary/20 flex items-center justify-center border border-primary/20 shadow-2xl group-hover/visualizer:scale-110 transition-transform duration-500">
-                  <Sparkles className="w-8 h-8 text-primary shadow-glow" />
-                </div>
-                <p className="text-base text-slate-400 font-medium leading-relaxed tracking-tight group-hover/visualizer:text-slate-300 transition-colors duration-500">
-                  Your current distribution parameters are optimized for <span className="text-white font-black tracking-tighter uppercase text-sm">Institutional Alpha Generation</span> across active protocols.
-                </p>
+              <div className="mt-4 pt-3 border-t border-slate-100 flex items-center gap-2">
+                <Zap className="w-3 h-3 text-primary fill-current" />
+                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Powered by Flow · Gasless</span>
               </div>
-            </div>
-          </motion.div>
-
+            </motion.div>
+          </div>
         </div>
       </motion.div>
     </PageTransition>
   );
 }
 
-function RuleSliderWeb({ label, icon, value, onChange, color, accent, amount }: any) {
+function SliderRow({ label, icon, value, onChange }: any) {
   return (
-    <div className="p-10 border-2 border-slate-50 rounded-[48px] hover:border-primary/30 transition-all duration-500 bg-white shadow-xl shadow-slate-100/50 space-y-8 group/slider">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-6">
-          <div className={`p-5 bg-slate-50 rounded-[28px] ${color} group-hover/slider:scale-110 group-hover/slider:bg-primary group-hover/slider:text-white transition-all duration-500`}>
-            {icon}
-          </div>
-          <span className="font-black text-slate-900 text-2xl tracking-tighter">{label}</span>
-        </div>
-        <div className="text-right">
-          <p className={`text-5xl font-black tracking-tighter ${color} leading-none mb-1`}>{value}<span className="text-lg opacity-40 ml-0.5">%</span></p>
-          <p className="text-[10px] text-slate-400 font-black uppercase tracking-[0.2em] leading-none">{amount}</p>
-        </div>
+    <div className="card-web p-4 flex items-center gap-4">
+      <div className="flex items-center gap-3 w-28 shrink-0">
+        <div className="p-2 bg-slate-50 rounded-lg border border-slate-100">{icon}</div>
+        <span className="text-sm font-bold text-slate-900">{label}</span>
       </div>
-      <div className="relative py-4">
-        <input 
-          type="range" 
-          min="0" 
-          max="80" 
-          value={value} 
-          onChange={(e) => onChange(parseInt(e.target.value))}
-          className={`w-full ${accent} h-4 bg-slate-50 rounded-full appearance-none cursor-pointer hover:h-5 transition-all outline-none border border-slate-100 shadow-inner`}
-        />
+      <input type="range" min="0" max="80" value={value} onChange={(e) => onChange(parseInt(e.target.value))} className="flex-1 accent-[#01281A] h-2 bg-slate-100 rounded-full appearance-none cursor-pointer" />
+      <span className="text-lg font-black text-slate-900 w-14 text-right">{value}%</span>
+    </div>
+  );
+}
+
+function OutcomeRow({ icon: Icon, label, pct, amount }: any) {
+  return (
+    <div className="flex items-center justify-between py-1">
+      <div className="flex items-center gap-3">
+        <div className="p-2.5 bg-white/10 rounded-xl">
+          <Icon className="w-5 h-5 text-secondary" />
+        </div>
+        <span className="text-base font-semibold text-white/90">{label}</span>
+      </div>
+      <div className="text-right">
+        <span className="text-xl font-black">{pct}%</span>
+        <p className="text-xs text-white/50 font-medium">= {amount} FLOW</p>
       </div>
     </div>
   );
 }
 
-function PreviewDetail({ label, val, color }: any) {
+function StepItem({ num, text }: { num: string; text: string }) {
   return (
-    <div className="flex items-center justify-between p-8 bg-white/5 rounded-[40px] border border-white/5 group hover:bg-white/10 hover:border-white/10 transition-all duration-500 shadow-2xl">
-      <div className="flex items-center gap-6">
-        <div className={`w-4 h-4 rounded-full ${color} shadow-[0_0_20px_white] opacity-80`} />
-        <span className="text-slate-400 font-black text-base uppercase tracking-widest">{label}</span>
-      </div>
-      <span className="text-2xl font-black text-white tracking-tighter">{val}</span>
+    <div className="flex items-center gap-3.5">
+      <div className="w-7 h-7 rounded-full bg-primary/5 border border-primary/10 flex items-center justify-center text-xs font-black text-primary shrink-0">{num}</div>
+      <span className="text-sm text-slate-600 font-medium">{text}</span>
     </div>
   );
 }
-
