@@ -2,78 +2,86 @@
 
 @theme {
   --color-primary: #00EF8B;
-  --color-primary-glow: rgba(0, 239, 139, 0.15);
-  --color-secondary: #121212;
-  --color-card-bg: rgba(255, 255, 255, 0.03);
-  --color-card-border: rgba(255, 255, 255, 0.08);
-  --color-text-muted: #888888;
+  --color-primary-hover: #00d67d;
+  --color-secondary: #00FFA3;
+  --color-accent: #06b6d4;
+  --color-surface: #ffffff;
+  --color-muted: #64748b;
+  --color-border: #e2e8f0;
   
   --font-outfit: "Outfit", sans-serif;
-
-  --animate-pulse-slow: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-  --animate-glow: glow 2s ease-in-out infinite alternate;
-
-  @keyframes glow {
-    0% { box-shadow: 0 0 5px rgba(0, 239, 139, 0.2); }
-    100% { box-shadow: 0 0 20px rgba(0, 239, 139, 0.6); }
-  }
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+  --shadow-2xl: 0 25px 50px -12px rgb(0 0 0 / 0.25);
 }
 
 :root {
-  --background: #000000;
-  --foreground: #ffffff;
+  --background: #f8fafc;
+  --foreground: #0f172a;
 }
 
 @layer base {
   body {
-    @apply bg-black text-white antialiased font-outfit;
-    background: radial-gradient(circle at 50% -20%, #111 0%, #000 100%);
+    @apply bg-slate-50 text-slate-900 antialiased font-outfit min-h-screen;
+    background-image: 
+      radial-gradient(#e2e8f0 1px, transparent 1px);
+    background-size: 24px 24px;
   }
 }
 
 @layer components {
-  .glass {
-    @apply backdrop-blur-xl bg-white/[0.03] border border-white/[0.08] rounded-[32px];
-    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.8);
+  .wide-container {
+    @apply w-full max-w-[1440px] mx-auto px-6 md:px-12 py-8;
+  }
+
+  .card-web {
+    @apply bg-white border border-slate-200 rounded-[24px] shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden;
   }
   
-  .glass-pill {
-    @apply backdrop-blur-md bg-white/[0.05] border border-white/[0.1] rounded-full;
+  .btn-web-primary {
+    @apply bg-primary text-white px-8 py-4 rounded-2xl font-semibold flex items-center justify-center gap-3 hover:bg-primary-hover hover:-translate-y-0.5 active:translate-y-0 transition-all shadow-lg shadow-indigo-500/20;
   }
 
-  .btn-primary {
-    @apply bg-[#00EF8B] text-black font-bold py-5 rounded-[24px] flex items-center justify-center gap-2 transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_0_20px_rgba(0,239,139,0.2)];
+  .input-web {
+    @apply w-full bg-slate-50 border border-slate-200 rounded-2xl px-6 py-4 text-slate-900 text-lg outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all;
   }
 
-  .input-glass {
-    @apply w-full bg-white/[0.03] border border-white/[0.08] rounded-2xl px-6 py-4 text-white text-lg outline-none focus:border-[#00EF8B]/30 transition-colors;
+  .nav-item {
+    @apply flex items-center gap-3 px-6 py-4 rounded-2xl font-medium text-slate-500 hover:text-primary hover:bg-primary/5 transition-all;
+  }
+
+  .nav-item-active {
+    @apply flex items-center gap-3 px-6 py-4 rounded-2xl font-bold text-primary bg-primary/10 transition-all;
   }
 }
 
 /* Custom Scrollbar */
 ::-webkit-scrollbar {
-  width: 4px;
+  width: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: transparent;
+  background: #f8fafc;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.1);
+  background: #cbd5e1;
   border-radius: 10px;
 }
 
-/* Mesh Gradient Background */
-.mesh-bg {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  z-index: -1;
-  background-image: 
-    radial-gradient(at 0% 0%, rgba(0, 239, 139, 0.05) 0, transparent 50%),
-    radial-gradient(at 100% 100%, rgba(0, 239, 139, 0.05) 0, transparent 50%);
-  pointer-events: none;
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Animations */
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+@keyframes float {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+  100% { transform: translateY(0px); }
 }
