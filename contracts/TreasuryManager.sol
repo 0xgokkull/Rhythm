@@ -36,7 +36,10 @@ contract TreasuryManager {
         emit FundsDistributed(_user, _savings, _bills, _spend);
     }
 
-    
+    function getUserBalance(address _user) external view returns (uint256) {
+        return userDeposits[_user];
+    }
+
     function totalBalance() external view returns (uint256) {
         return address(this).balance;
     }
