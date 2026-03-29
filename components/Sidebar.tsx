@@ -22,13 +22,13 @@ const menuItems = [
   { icon: Settings, label: 'Settings', href: '/settings' },
 ];
 
-export default function Sidebar() {
+export default function Sidebar({ isCollapsed, setIsCollapsed }: any) {
   const pathname = usePathname();
-  const [isCollapsed, setIsCollapsed] = useState(false);
 
   return (
     <aside 
-      className={`bg-white border-r border-slate-50 transition-all duration-500 ease-in-out flex flex-col z-50 relative ${
+      style={{ '--sidebar-width': isCollapsed ? '96px' : '320px' } as any}
+      className={`fixed top-0 left-0 h-screen bg-white border-r border-slate-50 transition-all duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] flex flex-col z-50 ${
         isCollapsed ? 'w-24' : 'w-80'
       }`}
     >
