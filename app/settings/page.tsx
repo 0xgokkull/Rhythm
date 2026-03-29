@@ -163,17 +163,70 @@ export default function SettingsPage() {
                   </button>
                 </div>
 
-                <div className="p-4 bg-white/50 rounded-xl border border-slate-100">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-[11px] text-slate-400 font-black uppercase tracking-widest">Retry Depth Configuration</span>
-                    <span className="text-[11px] text-primary font-black uppercase tracking-widest">L3 Active</span>
+                {/* Retry Depth */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h5 className="text-base font-black text-slate-900 tracking-tight">Retry Depth</h5>
+                      <p className="text-[12px] text-slate-500 font-medium">How many fallback nodes the engine attempts before failing.</p>
+                    </div>
+                    <span className="text-sm font-black text-primary bg-primary/5 px-2.5 py-1 rounded-lg border border-primary/10">
+                      L{sim.retryDepth} Active
+                    </span>
                   </div>
-                  <div className="flex items-center gap-1.5">
+                  <div className="flex items-center gap-2">
                     {[1, 2, 3, 4, 5].map(i => (
-                      <div key={i} className={`h-1 flex-1 rounded-full ${i <= 3 ? 'bg-primary' : 'bg-slate-100'}`} />
+                      <button 
+                        key={i}
+                        onClick={() => sim.setSimulationParams({ depth: i })}
+                        className={`h-2 flex-1 rounded-full transition-all ${
+                          i <= sim.retryDepth ? 'bg-primary shadow-sm shadow-primary/20' : 'bg-slate-100 hover:bg-slate-200'
+                        }`}
+                      />
                     ))}
                   </div>
-                  <p className="text-[10px] text-slate-400 mt-2 font-bold italic text-center">Engine automatically attempts recovery up to 3 node layers deep.</p>
+                </div>
+
+                {/* Simulation Speed */}
+                <div className="space-y-3 pt-6 border-t border-slate-100">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h5 className="text-base font-black text-slate-900 tracking-tight">Simulation Speed</h5>
+                      <p className="text-[12px] text-slate-500 font-medium">Adjust the demo execution pace (0.5x - 4x).</p>
+                    </div>
+                    <span className="text-sm font-black text-slate-900 bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-100">
+                      {sim.simulationSpeed}x
+                    </span>
+                  </div>
+                  <input 
+                    type="range" 
+                    min="0.5" 
+                    max="4" 
+                    step="0.5" 
+                    value={sim.simulationSpeed}
+                    onChange={(e) => sim.setSimulationParams({ speed: parseFloat(e.target.value) })}
+                    className="w-full h-2 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-primary"
+                  />
+                </div>
+
+                {/* Execution Frequency */}
+                <div className="space-y-3 pt-6 border-t border-slate-100">
+                  <h5 className="text-base font-black text-slate-900 tracking-tight">Execution Frequency</h5>
+                  <div className="grid grid-cols-3 gap-2">
+                    {['Monthly', 'Bi-weekly', 'Manual'].map(freq => (
+                      <button
+                        key={freq}
+                        onClick={() => sim.setSimulationParams({ freq: freq as any })}
+                        className={`py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest border transition-all ${
+                          sim.executionFrequency === freq 
+                            ? 'bg-primary text-white border-primary shadow-lg shadow-primary/20' 
+                            : 'bg-white text-slate-500 border-slate-100 hover:border-slate-200'
+                        }`}
+                      >
+                        {freq}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
             </motion.div>

@@ -14,6 +14,7 @@ export interface TimelineEvent {
   amount?: string;
   vault?: string;
   retryCount?: number;
+  txId?: string;
 }
 
 export interface VaultBalance {
@@ -39,11 +40,15 @@ interface SimulationState {
   vaults: VaultBalance;
   salary: number;
   rules: { savings: number; bills: number; spend: number };
+  simulationSpeed: number;
+  retryDepth: number;
+  executionFrequency: 'Monthly' | 'Bi-weekly' | 'Manual';
   simulateSalary: () => void;
   resetSimulation: () => void;
   toggleEngine: () => void;
   setRules: (rules: { savings: number; bills: number; spend: number }) => void;
   setSalary: (salary: number) => void;
+  setSimulationParams: (params: { speed?: number; depth?: number; freq?: 'Monthly' | 'Bi-weekly' | 'Manual' }) => void;
 }
 
 const SimulationContext = createContext<SimulationState | null>(null);
@@ -106,8 +111,13 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
       description: 'On-chain execution complete via Flow Scheduled Transaction.',
       status: 'success',
       amount: '500 FLOW',
+      txId: '0xabc...123',
     },
   ]);
+  
+  const [simulationSpeed, setSimulationSpeed] = useState(1);
+  const [retryDepth, setRetryDepth] = useState(3);
+  const [executionFrequency, setExecutionFrequency] = useState<'Monthly' | 'Bi-weekly' | 'Manual'>('Monthly');
 
   const addEvent = useCallback((event: Omit<TimelineEvent, 'id' | 'timestamp'>) => {
     setTimeline(prev => [{
@@ -121,10 +131,12 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
     if (isEnginePaused) return;
     if (status !== 'idle' && status !== 'success') return;
 
+    const baseSpeed = 1000 / simulationSpeed;
     const depositAmount = salary;
     const savingsAmt = parseFloat(((depositAmount * rules.savings) / 100).toFixed(1));
     const billsAmt = parseFloat(((depositAmount * rules.bills) / 100).toFixed(1));
     const spendAmt = parseFloat((depositAmount - savingsAmt - billsAmt).toFixed(1));
+    const txId = `0x${Math.random().toString(16).slice(2, 10)}...${Math.random().toString(16).slice(2, 6)}`;
 
     // Phase 1: DETECTION
     setCurrentPhase('DETECTION');
@@ -132,7 +144,7 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
     setRetryCount(0);
     addEvent({
       title: `Deposit Detected — ${depositAmount} FLOW`,
-      description: 'Triggering verification for incoming on-chain funds.',
+      description: 'Triggering verification for incoming on-chain funds. Monitoring Flow network state...',
       status: 'info',
       amount: `${depositAmount} FLOW`,
     });
@@ -141,48 +153,59 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
     setTimeout(() => {
       setCurrentPhase('VALIDATION');
       addEvent({
-        title: 'Validating Flow Network State',
-        description: 'Checking node availability and consensus health.',
+        title: 'Verifying Path Efficiency',
+        description: 'Analyzing node health and congestion layers. Execution priority set to High.',
         status: 'processing',
       });
-    }, 2000);
+    }, baseSpeed * 2);
 
-    // Phase 3: ALLOCATION
+    // Phase 3: ALLOCATION (Initial Attempt)
     setTimeout(() => {
       setCurrentPhase('ALLOCATION');
       setStatus('splitting');
       addEvent({
         title: 'Initiating On-Chain Allocation',
-        description: `Routing: ${rules.savings}% Savings · ${rules.bills}% Bills · ${rules.spend}% Spend`,
+        description: `Split Engine routing capital...`,
         status: 'processing',
         amount: `${depositAmount} FLOW`,
       });
-    }, 4500);
+    }, baseSpeed * 4.5);
 
-    // Phase 4: Simulated Failure/RETRY_LOGIC
+    // Phase 4: Intentional Friction (RETRY_LOGIC)
     setTimeout(() => {
       setCurrentPhase('RETRY_LOGIC');
       setStatus('failed');
       addEvent({
-        title: 'Node Timeout Detected',
-        description: 'Execution delayed by network congestion. Engaging retry layer.',
+        title: 'Execution Interrupted',
+        description: 'Network congestion detected below threshold. Engaging Flow Retry engine.',
         status: 'error',
       });
-    }, 7000);
+    }, baseSpeed * 7);
 
-    // Phase 5: RETRY
+    // Phase 5: RETRY 1
     setTimeout(() => {
       setStatus('retrying');
       setRetryCount(1);
       addEvent({
-        title: 'Retry Engine Active (Try 1/3)',
-        description: 'Re-routing execution to high-priority Flow access node.',
+        title: 'Retry Engine Active (1/3)',
+        description: 'Escalating to secondary Flow Access Node...',
         status: 'warning',
         retryCount: 1,
       });
-    }, 9000);
+    }, baseSpeed * 9);
 
-    // Phase 6: FINALIZING
+    // Phase 6: RETRY 2 (Friction Depth)
+    setTimeout(() => {
+      setRetryCount(2);
+      addEvent({
+        title: 'Finalizing Path Stability (2/3)',
+        description: 'Waiting for Flow block consensus. Verification layer active.',
+        status: 'processing',
+        retryCount: 2,
+      });
+    }, baseSpeed * 11);
+
+    // Phase 7: FINALIZING
     setTimeout(() => {
       setCurrentPhase('FINALIZING');
       setStatus('success');
@@ -204,16 +227,22 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
 
       addEvent({
         title: 'Autopilot Success',
-        description: `Split completed via Flow Scheduled Transaction. ${savingsAmt} FLOW → Savings · ${billsAmt} FLOW → Bills.`,
+        description: `Split completed via Flow Scheduled Transaction. On-chain execution verified.`,
         status: 'success',
         amount: `${depositAmount} FLOW`,
+        txId,
         vault: 'All Vaults',
       });
       
-      // Reset phase after some time
       setTimeout(() => setCurrentPhase('IDLE'), 3000);
-    }, 12000);
-  }, [status, salary, rules, addEvent, isEnginePaused]);
+    }, baseSpeed * 14);
+  }, [status, salary, rules, addEvent, isEnginePaused, simulationSpeed, retryDepth]);
+
+  const setSimulationParams = useCallback((params: any) => {
+    if (params.speed !== undefined) setSimulationSpeed(params.speed);
+    if (params.depth !== undefined) setRetryDepth(params.depth);
+    if (params.freq !== undefined) setExecutionFrequency(params.freq);
+  }, []);
 
   const resetSimulation = useCallback(() => {
     setStatus('idle');
@@ -256,7 +285,8 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
     <SimulationContext.Provider value={{
       status, currentPhase, isEnginePaused, lastRun, lastAmount, nextRun, retryCount, successRate,
       totalAutomated, autoSavedThisMonth, timeline, vaults, salary, rules,
-      simulateSalary, resetSimulation, toggleEngine, setRules, setSalary,
+      simulationSpeed, retryDepth, executionFrequency,
+      simulateSalary, resetSimulation, toggleEngine, setRules, setSalary, setSimulationParams,
     }}>
       {children}
     </SimulationContext.Provider>

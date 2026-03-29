@@ -24,7 +24,7 @@ export default function LandingPage() {
     setIsConnecting(true);
     setTimeout(() => {
       router.push('/dashboard');
-    }, 2000);
+    }, 2400);
   };
 
   const containerVariants: any = {
@@ -68,7 +68,7 @@ export default function LandingPage() {
             </motion.div>
 
             {/* Title */}
-            <motion.h1 variants={itemVariants} className="text-7xl md:text-9xl font-black text-slate-900 tracking-tighter leading-[0.85] mb-8">
+            <motion.h1 variants={itemVariants} className="text-6xl md:text-8xl font-black text-slate-900 tracking-tighter leading-[0.9] mb-8">
               Money on <br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-emerald-600">Autopilot.</span>
             </motion.h1>
@@ -89,12 +89,12 @@ export default function LandingPage() {
                 {isConnecting ? (
                   <>
                     <Loader2 className="w-6 h-6 animate-spin" />
-                    Connecting to Flow...
+                    Launching Autopilot...
                   </>
                 ) : (
                   <>
-                    <Wallet className="w-7 h-7" />
-                    Connect Wallet
+                    <Zap className="w-7 h-7 fill-current" />
+                    Start Autopilot
                     <ArrowRight className="w-6 h-6 group-hover:translate-x-1 transition-transform" />
                   </>
                 )}

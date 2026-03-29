@@ -1,6 +1,6 @@
 'use client';
 
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Zap, 
   TrendingUp, 
@@ -205,9 +205,24 @@ function AutopilotHero({ status, phase, lastRun, lastAmount, nextRun, retryCount
   const cfg = statusConfig[status];
   const Icon = cfg.icon;
   const isProcessing = ['detecting', 'splitting', 'retrying'].includes(status);
+  const isError = status === 'failed';
 
   return (
-    <div className={`card-web p-6 border ${cfg.bg} transition-all duration-500 relative overflow-hidden`}>
+    <div className={`card-web p-6 border ${cfg.bg} transition-all duration-500 relative overflow-hidden group`}>
+      {/* Dynamic Flow Execution Ribbon */}
+      <AnimatePresence>
+        {status === 'success' && (
+          <motion.div 
+            initial={{ y: -40, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: -40, opacity: 0 }}
+            className="absolute top-0 inset-x-0 h-6 bg-emerald-600 flex items-center justify-center gap-2"
+          >
+            <ShieldCheck className="w-3 h-3 text-white" />
+            <span className="text-[10px] text-white font-black uppercase tracking-widest">On-Chain execution confirmed via Flow</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
       {/* Background Accent for Active Phase */}
       {phase !== 'IDLE' && (
         <motion.div 
@@ -254,7 +269,7 @@ function AutopilotHero({ status, phase, lastRun, lastAmount, nextRun, retryCount
           
           <button
             onClick={onSimulate}
-            disabled={isProcessing || status === 'failed' || isPaused}
+            disabled={isProcessing || isError || isPaused}
             className="flex items-center gap-2 px-6 h-12 bg-primary text-white rounded-xl font-bold text-sm hover:shadow-xl hover:shadow-primary/20 hover:-translate-y-0.5 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0"
           >
             {isPaused ? (
@@ -262,11 +277,11 @@ function AutopilotHero({ status, phase, lastRun, lastAmount, nextRun, retryCount
             ) : isProcessing ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin" />
-                Executing...
+                {status === 'retrying' ? `Retry Attempt ${retryCount}...` : 'Executing...'}
               </>
             ) : (
               <>
-                <Play className="w-4 h-4 fill-current" />
+                <Play className="w-4 h-4 fill-current transition-transform group-hover:scale-110" />
                 Simulate Deposit
               </>
             )}
@@ -324,6 +339,23 @@ function TimelineItem({ event, isLast }: { event: any; isLast: boolean }) {
           <div>
             <p className="text-sm font-bold text-slate-900 tracking-tight leading-tight">{event.title}</p>
             <p className="text-[11px] text-slate-500 font-medium mt-1 leading-relaxed">{event.description}</p>
+            
+            {(event.txId || event.retryCount) && (
+              <div className="flex items-center gap-3 mt-2">
+                {event.txId && (
+                  <div className="flex items-center gap-1.5 px-2 py-1 bg-emerald-50 text-emerald-700 rounded-md border border-emerald-100/50">
+                    <ShieldCheck className="w-3 h-3" />
+                    <span className="text-[9px] font-black uppercase tracking-widest font-mono">{event.txId}</span>
+                  </div>
+                )}
+                {event.retryCount && (
+                  <div className="flex items-center gap-1.5 px-2 py-1 bg-amber-50 text-amber-700 rounded-md border border-amber-100/50">
+                    <RotateCcw className="w-3 h-3" />
+                    <span className="text-[9px] font-black uppercase tracking-widest">Retry L{event.retryCount} Active</span>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
           <span className="text-[11px] text-slate-400 font-black uppercase tracking-widest shrink-0 ml-4 mt-1 bg-slate-50 px-2 py-0.5 rounded-full">{event.timestamp}</span>
         </div>
