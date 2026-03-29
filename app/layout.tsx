@@ -6,6 +6,7 @@ import Sidebar from "@/components/Sidebar";
 import TopHeader from "@/components/TopHeader";
 import { useState } from "react";
 import { usePathname } from "next/navigation";
+import { SimulationProvider } from "@/context/SimulationContext";
 
 const outfit = Outfit({
   subsets: ["latin"],
@@ -25,24 +26,24 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${outfit.variable} font-outfit antialiased`}>
-        <div className="flex min-h-screen bg-slate-50 overflow-x-hidden">
-          {/* Sidebar - Fixed (Hidden on Landing) */}
-          {!isLanding && <Sidebar isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />}
-          
-          {/* Main Content Area - Pushed by Sidebar width (No push on Landing) */}
-          <div 
-            className={`flex-1 flex flex-col min-w-0 transition-all duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] ${
-              isLanding ? 'pl-0' : (isCollapsed ? 'pl-24' : 'pl-80')
-            }`}
-          >
-            {!isLanding && <TopHeader />}
-            <main className="flex-1">
-              <div className={`${isLanding ? '' : 'wide-container py-12'}`}>
-                {children}
-              </div>
-            </main>
+        <SimulationProvider>
+          <div className="flex h-screen bg-slate-50 overflow-hidden">
+            {!isLanding && <Sidebar isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />}
+            
+            <div 
+              className={`flex-1 flex flex-col min-w-0 transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] overflow-hidden ${
+                isLanding ? 'pl-0' : (isCollapsed ? 'pl-[72px]' : 'pl-[240px]')
+              }`}
+            >
+              {!isLanding && <TopHeader isCollapsed={isCollapsed} />}
+              <main className="flex-1 overflow-y-auto">
+                <div className={`${isLanding ? '' : 'wide-container py-8'}`}>
+                  {children}
+                </div>
+              </main>
+            </div>
           </div>
-        </div>
+        </SimulationProvider>
       </body>
     </html>
   );
