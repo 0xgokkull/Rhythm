@@ -2,61 +2,55 @@
 pragma solidity ^0.8.20;
 
 /**
- * @title IERC20 (Mock for Flow USDC)
- */
-interface IERC20 {
-    function transferFrom(address from, address to, uint256 amount) external returns (bool);
-    function transfer(address to, uint256 amount) external returns (bool);
-    function balanceOf(address account) external view returns (uint256);
-}
-
-/**
  * @title TreasuryManager
- * @dev Handles USDC flow. Only moves tokens. Logic is handled elsewhere.
- * Prevents mixing of funds and calculation logic.
+ * @dev Native FLOW custody layer. No ERC-20. Uses msg.value.
  */
 contract TreasuryManager {
-    IERC20 public usdc;
     address public executionEngine;
+    mapping(address => uint256) public userDeposits;
 
     modifier onlyEngine() {
-        require(msg.sender == executionEngine, "Only ExecutionEngine can move funds.");
+        require(msg.sender == executionEngine, "Only ExecutionEngine");
         _;
     }
 
     event FundsPulled(address indexed user, uint256 amount);
     event FundsDistributed(address indexed user, uint256 savings, uint256 bills, uint256 spend);
 
-    constructor(address _usdc, address _executionEngine) {
-        usdc = IERC20(_usdc);
+    constructor(address _executionEngine) {
         executionEngine = _executionEngine;
     }
 
     /**
-     * @dev Pulls USDC from user to this contract. User must have approved this TM first.
+     * @dev Users deposit native FLOW here.
      */
-    function pullFunds(address _user, uint256 _amount) external onlyEngine {
-        require(usdc.transferFrom(_user, address(this), _amount), "USDC Transfer failed.");
-        emit FundsPulled(_user, _amount);
+    function deposit() external payable {
+        require(msg.value > 0, "Must send FLOW");
+        userDeposits[msg.sender] += msg.value;
+        emit FundsPulled(msg.sender, msg.value);
     }
 
     /**
-     * @dev Distributes USDC into sub-accounts or simply marks it withinVaultLedger.
-     * In a real system, these would be separate sub-vaults or internal accounts.
-     * For now, this distributes from TM to VaultLedger-protected records.
+     * @dev Called by ExecutionEngine to confirm split distribution accounting.
+     * Funds remain in contract; VaultLedger tracks sub-balances.
      */
     function distributeFunds(
-        address _user, 
-        uint256 _savings, 
-        uint256 _bills, 
+        address _user,
+        uint256 _savings,
+        uint256 _bills,
         uint256 _spend
-    ) 
-        external 
-        onlyEngine 
-    {
+    ) external onlyEngine {
         uint256 total = _savings + _bills + _spend;
-        // Logic: Funds are held in this TreasuryManager contract, 
-        // with accounting updated in VaultLedger by the ExecutionEngine.
+        // Invariant: treasury must hold enough for this user
+        require(userDeposits[_user] >= total, "Insufficient treasury balance");
+        userDeposits[_user] -= total;
         emit FundsDistributed(_user, _savings, _bills, _spend);
+    }
+
+    /**
+     * @dev Total FLOW held in this contract.
+     */
+    function totalBalance() external view returns (uint256) {
+        return address(this).balance;
     }
 }
