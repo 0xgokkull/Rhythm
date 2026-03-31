@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useBackend } from '@/context/BackendContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   ArrowRight, 
@@ -18,13 +19,13 @@ import {
 
 export default function LandingPage() {
   const router = useRouter();
-  const [isConnecting, setIsConnecting] = useState(false);
+  const { connectWallet, isConnecting } = useBackend();
 
-  const handleConnect = () => {
-    setIsConnecting(true);
-    setTimeout(() => {
+  const handleConnect = async () => {
+    const success = await connectWallet();
+    if (success) {
       router.push('/dashboard');
-    }, 2400);
+    }
   };
 
   const containerVariants: any = {
@@ -89,12 +90,12 @@ export default function LandingPage() {
                 {isConnecting ? (
                   <>
                     <Loader2 className="w-6 h-6 animate-spin" />
-                    Launching Autopilot...
+                    Connecting Wallet...
                   </>
                 ) : (
                   <>
                     <Zap className="w-7 h-7 fill-current" />
-                    Start Autopilot
+                    Connect Wallet
                     <ArrowRight className="w-6 h-6 group-hover:translate-x-1 transition-transform" />
                   </>
                 )}
