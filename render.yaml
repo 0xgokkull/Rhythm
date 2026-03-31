@@ -3,8 +3,8 @@ services:
     name: rhythm-zbcx
     runtime: node
     plan: free
-    buildCommand: npm install
-    startCommand: node server.js
+    buildCommand: cd backend && npm install
+    startCommand: cd backend && node server.js
     healthCheckPath: /health
     disk:
       name: data
