@@ -5,6 +5,7 @@ const path = require('path');
 require('dotenv').config();
 
 const STATE_FILE = '/data/indexer_state.json';
+const FALLBACK_STATE_FILE = path.join(__dirname, '../.indexer_state.json');
 
 class EventIndexer {
     constructor(rpcUrl, contracts) {
@@ -22,28 +23,41 @@ class EventIndexer {
 
     async loadState() {
         try {
-            if (fs.existsSync(STATE_FILE)) {
-                const data = JSON.parse(fs.readFileSync(STATE_FILE, 'utf8'));
-                this.lastBlock = data.lastBlock || 0;
-                console.log(`[Indexer] 💾 Loaded state from disk. lastBlock: ${this.lastBlock}`);
-            } else {
-                this.lastBlock = await this.provider.getBlockNumber();
-                console.log(`[Indexer] 🆕 No state file. Starting from current block: ${this.lastBlock}`);
-                this.saveState();
+            let targetFile = STATE_FILE;
+            if (!fs.existsSync(STATE_FILE)) {
+                if (fs.existsSync(FALLBACK_STATE_FILE)) {
+                    targetFile = FALLBACK_STATE_FILE;
+                } else {
+                    this.lastBlock = await this.provider.getBlockNumber();
+                    console.log(`[Indexer] 🆕 No state file found. Starting from: ${this.lastBlock}`);
+                    await this.saveState();
+                    return;
+                }
             }
+
+            const data = JSON.parse(fs.readFileSync(targetFile, 'utf8'));
+            this.lastBlock = data.lastBlock || 0;
+            console.log(`[Indexer] 💾 Loaded state from ${targetFile}. lastBlock: ${this.lastBlock}`);
         } catch (e) {
-            console.error('[Indexer] State load failed:', e.message);
+            console.warn('[Indexer] ⚠️ State load fallback:', e.message);
             this.lastBlock = await this.provider.getBlockNumber();
         }
     }
 
     async saveState() {
+        const data = JSON.stringify({ lastBlock: this.lastBlock, updatedAt: Date.now() });
         try {
+            // Attempt primary (Persistent Disk)
             const dir = path.dirname(STATE_FILE);
-            if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-            fs.writeFileSync(STATE_FILE, JSON.stringify({ lastBlock: this.lastBlock, updatedAt: Date.now() }));
+            if (fs.existsSync(dir)) {
+                fs.writeFileSync(STATE_FILE, data);
+                return;
+            }
+            
+            // Attempt fallback (Local Disk)
+            fs.writeFileSync(FALLBACK_STATE_FILE, data);
         } catch (e) {
-            console.error('[Indexer] State save failed:', e.message);
+            console.error('[Indexer] ❌ All state save attempts failed:', e.message);
         }
     }
 
