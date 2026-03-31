@@ -7,7 +7,7 @@ import TopHeader from "@/components/TopHeader";
 import OnboardingOverlay from "@/components/OnboardingOverlay";
 import { useState } from "react";
 import { usePathname } from "next/navigation";
-import { SimulationProvider } from "@/context/SimulationContext";
+import { BackendProvider } from "@/context/BackendContext";
 
 const outfit = Outfit({
   subsets: ["latin"],
@@ -27,7 +27,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${outfit.variable} font-outfit antialiased`}>
-        <SimulationProvider>
+        <BackendProvider>
           {!isLanding && <OnboardingOverlay />}
           <div className="flex h-screen bg-slate-50 overflow-hidden">
             {!isLanding && <Sidebar isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />}
@@ -45,7 +45,7 @@ export default function RootLayout({
               </main>
             </div>
           </div>
-        </SimulationProvider>
+        </BackendProvider>
       </body>
     </html>
   );
