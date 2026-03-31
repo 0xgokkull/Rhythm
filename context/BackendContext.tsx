@@ -40,11 +40,14 @@ interface BackendState {
   salary: number;
   isEnginePaused: boolean;
   isLoading: boolean;
+  userAddress: string | null;
+  isConnecting: boolean;
   setSalary: (s: number) => void;
   toggleEngine: () => void;
   triggerExecution: (amount: number) => Promise<void>;
   updateRules: (savings: number, bills: number) => Promise<void>;
   refreshData: () => Promise<void>;
+  connectWallet: () => Promise<boolean>;
 }
 
 const BackendContext = createContext<BackendState | null>(null);
@@ -55,10 +58,20 @@ export function useBackend() {
   return ctx;
 }
 
-const API_URL = 'http://localhost:4000';
-const USER_ADDRESS = '0x6B015Df62da64A12dF2e13d2fFAb9BFd99a838a2';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://rhythm-backend.onrender.com';
+
+const FLOW_TESTNET_CONFIG = {
+  chainId: '0x221',
+  chainName: 'Flow EVM Testnet',
+  nativeCurrency: { name: 'FLOW', symbol: 'FLOW', decimals: 18 },
+  rpcUrls: ['https://testnet.evm.nodes.onflow.org'],
+  blockExplorerUrls: ['https://evm-testnet.flowscan.io']
+};
 
 export function BackendProvider({ children }: { children: ReactNode }) {
+  const [userAddress, setUserAddress] = useState<string | null>(null);
+  const [isConnecting, setIsConnecting] = useState(false);
+
   const [vaults, setVaults] = useState<VaultBalances | null>(null);
   const [rules, setRules] = useState<{ savings: number; bills: number; spend: number } | null>(null);
   const [timeline, setTimeline] = useState<TimelineEvent[]>([]);
@@ -68,55 +81,109 @@ export function BackendProvider({ children }: { children: ReactNode }) {
   const [isEnginePaused, setIsEnginePaused] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  const fetchVaults = async () => {
+  useEffect(() => {
+    const autoConnect = async () => {
+      if (typeof window !== 'undefined' && (window as any).ethereum) {
+        try {
+          const accounts = await (window as any).ethereum.request({ method: 'eth_accounts' });
+          if (accounts.length > 0) setUserAddress(accounts[0]);
+        } catch(e) {}
+      }
+    };
+    autoConnect();
+  }, []);
+
+  const connectWallet = async (): Promise<boolean> => {
     try {
-      const res = await fetch(`${API_URL}/vault/${USER_ADDRESS}`);
+      setIsConnecting(true);
+      if (!(window as any).ethereum) throw new Error("No crypto wallet found");
+      const provider = (window as any).ethereum;
+      
+      const accounts = await provider.request({ method: 'eth_requestAccounts' });
+      if (accounts.length > 0) {
+        setUserAddress(accounts[0]);
+      }
+
+      try {
+        await provider.request({
+          method: 'wallet_switchEthereumChain',
+          params: [{ chainId: FLOW_TESTNET_CONFIG.chainId }],
+        });
+      } catch (switchError: any) {
+        if (switchError.code === 4902) {
+          await provider.request({
+            method: 'wallet_addEthereumChain',
+            params: [FLOW_TESTNET_CONFIG],
+          });
+        } else {
+          throw switchError;
+        }
+      }
+      return true;
+    } catch (e) {
+      console.error("Wallet connection failed:", e);
+      return false;
+    } finally {
+      setIsConnecting(false);
+    }
+  };
+
+  const fetchVaults = useCallback(async () => {
+    if (!userAddress) return;
+    try {
+      const res = await fetch(`${API_URL}/vault/${userAddress}`);
       if (res.ok) setVaults(await res.json());
     } catch (e) {}
-  };
+  }, [userAddress]);
 
-  const fetchRules = async () => {
+  const fetchRules = useCallback(async () => {
+    if (!userAddress) return;
     try {
-      const res = await fetch(`${API_URL}/rule/${USER_ADDRESS}`);
+      const res = await fetch(`${API_URL}/rule/${userAddress}`);
       if (res.ok) setRules(await res.json());
     } catch (e) {}
-  };
+  }, [userAddress]);
 
-  const fetchTimeline = async () => {
+  const fetchTimeline = useCallback(async () => {
+    if (!userAddress) return;
     try {
-      const res = await fetch(`${API_URL}/activity/${USER_ADDRESS}`);
+      const res = await fetch(`${API_URL}/activity/${userAddress}`);
       if (res.ok) setTimeline(await res.json());
     } catch (e) {}
-  };
+  }, [userAddress]);
 
-  const fetchSystemStatus = async () => {
+  const fetchSystemStatus = useCallback(async () => {
+    if (!userAddress) return;
     try {
-      const res = await fetch(`${API_URL}/system/status`);
+      const res = await fetch(`${API_URL}/system/status/${userAddress}`);
       if (res.ok) setSystemStatus(await res.json());
     } catch (e) {}
-  };
+  }, [userAddress]);
 
   const refreshData = useCallback(async () => {
+    if (!userAddress) return;
     setIsLoading(true);
     await Promise.all([fetchVaults(), fetchRules(), fetchTimeline(), fetchSystemStatus()]);
     setIsLoading(false);
-  }, []);
+  }, [userAddress, fetchVaults, fetchRules, fetchTimeline, fetchSystemStatus]);
 
   useEffect(() => {
-    refreshData();
-    const interval = setInterval(refreshData, 5000);
-    return () => clearInterval(interval);
-  }, [refreshData]);
+    if (userAddress) {
+      refreshData();
+      const interval = setInterval(refreshData, 5000);
+      return () => clearInterval(interval);
+    }
+  }, [refreshData, userAddress]);
 
   const toggleEngine = () => setIsEnginePaused(p => !p);
 
   const triggerExecution = async (amount: number) => {
-    if (isEnginePaused) return;
+    if (isEnginePaused || !userAddress) return;
     try {
       await fetch(`${API_URL}/execution/trigger`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ user: USER_ADDRESS, amount })
+        body: JSON.stringify({ user: userAddress, amount })
       });
       setTimeout(refreshData, 1000);
     } catch (e) {
@@ -125,6 +192,7 @@ export function BackendProvider({ children }: { children: ReactNode }) {
   };
 
   const updateRules = async (savings: number, bills: number) => {
+    if (!userAddress) return;
     try {
       await fetch(`${API_URL}/rule/set`, {
         method: 'POST',
@@ -139,8 +207,8 @@ export function BackendProvider({ children }: { children: ReactNode }) {
 
   return (
     <BackendContext.Provider value={{
-      vaults, rules, timeline, systemStatus, salary, isEnginePaused, isLoading,
-      setSalary, toggleEngine, triggerExecution, updateRules, refreshData
+      vaults, rules, timeline, systemStatus, salary, isEnginePaused, isLoading, userAddress, isConnecting,
+      setSalary, toggleEngine, triggerExecution, updateRules, refreshData, connectWallet
     }}>
       {children}
     </BackendContext.Provider>
