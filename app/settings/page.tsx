@@ -19,7 +19,7 @@ import { useState, useEffect } from 'react';
 
 export default function SettingsPage() {
   const backend = useBackend();
-  const { rules, updateRules, isEnginePaused, toggleEngine } = backend;
+  const { rules, updateRules, isEnginePaused, toggleEngine, userAddress } = backend;
 
   const [savings, setSavings] = useState(0);
   const [bills, setBills] = useState(0);
@@ -92,7 +92,7 @@ export default function SettingsPage() {
               
               <div className="space-y-3 pt-4 border-t border-slate-100">
                 <InfoRow icon={<Globe className="w-3.5 h-3.5" />} label="Network" value="Flow Testnet" badge="EVM" />
-                <InfoRow icon={<Key className="w-3.5 h-3.5" />} label="Account ID" value="0x6B015...838a2" mono />
+                <InfoRow icon={<Key className="w-3.5 h-3.5" />} label="Account ID" value={userAddress ? `${userAddress.slice(0, 7)}...${userAddress.slice(-5)}` : 'Disconnected'} mono />
                 <InfoRow icon={<Wallet className="w-3.5 h-3.5" />} label="Wallet Type" value="Relayer Proxy" />
               </div>
             </motion.div>
