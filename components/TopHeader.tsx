@@ -7,10 +7,12 @@ import {
   Zap
 } from 'lucide-react';
 import { usePathname } from 'next/navigation';
+import { useBackend } from '@/context/BackendContext';
 
 export default function TopHeader({ isCollapsed }: { isCollapsed?: boolean }) {
   const pathname = usePathname();
-  
+  const { userAddress } = useBackend();
+
   const getTitle = () => {
     const segments = pathname.split('/').filter(Boolean);
     if (segments.length === 0) return 'Welcome Back';
@@ -55,11 +57,17 @@ export default function TopHeader({ isCollapsed }: { isCollapsed?: boolean }) {
         {}
         <div className="flex items-center gap-2.5 cursor-pointer group">
           <div className="text-right hidden sm:block">
-            <p className="text-sm font-bold text-slate-900 group-hover:text-primary transition-colors leading-none">Gokul</p>
-            <p className="text-[11px] text-slate-400 font-bold leading-none mt-1">Flow Testnet</p>
+            <p className="text-sm font-bold text-slate-900 group-hover:text-primary transition-colors leading-none font-mono tracking-tight">
+              {userAddress ? `${userAddress.slice(0, 6)}...${userAddress.slice(-4)}` : 'Disconnected'}
+            </p>
+            <p className="text-[11px] text-slate-400 font-bold leading-none mt-1">
+              {userAddress ? 'Flow EVM' : 'Connect'}
+            </p>
           </div>
-          <div className="w-9 h-9 rounded-xl bg-primary/5 border border-primary/10 flex items-center justify-center">
-            <User className="w-4.5 h-4.5 text-primary" />
+          <div className="w-9 h-9 rounded-xl border flex items-center justify-center transition-colors shadow-sm
+            ${userAddress ? 'bg-primary/5 border-primary/10' : 'bg-slate-50 border-slate-200'}"
+          >
+            <User className={`w-4.5 h-4.5 ${userAddress ? 'text-primary' : 'text-slate-400'}`} />
           </div>
         </div>
       </div>
