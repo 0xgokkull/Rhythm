@@ -120,8 +120,12 @@ export function BackendProvider({ children }: { children: ReactNode }) {
         }
       }
       return true;
-    } catch (e) {
-      console.error("Wallet connection failed:", e);
+    } catch (e: any) {
+      if (e.code === 4001) {
+        console.log("Wallet connection canceled by user.");
+      } else {
+        console.error("Wallet connection failed:", e);
+      }
       return false;
     } finally {
       setIsConnecting(false);
