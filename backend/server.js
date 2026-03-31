@@ -65,7 +65,8 @@ try {
 const ruleEngine = new ethers.Contract(ADDRESSES.RuleEngine, ABIS.RuleEngine, wallet || provider);
 const vaultLedger = new ethers.Contract(ADDRESSES.VaultLedger, ABIS.VaultLedger, provider);
 const treasuryManager = new ethers.Contract(ADDRESSES.TreasuryManager, ABIS.TreasuryManager, provider);
-const controller = new ethers.Contract(ADDRESSES.AutomationController, ABIS.AutomationController, wallet || provider);
+// Direct calling of the ExecutionEngine (which is the Relayer's own address as engine)
+const controller = new ethers.Contract(ADDRESSES.ExecutionEngine, ABIS.AutomationController, wallet || provider);
 
 const lastRequest = {};
 function rateLimit(req, res, next) {
