@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   ArrowRight,
@@ -284,6 +285,23 @@ function TimelineItem({ event, isLast }: { event: any; isLast: boolean }) {
   const isSuccess = event.status === 'confirmed';
   const isPending = event.status === 'pending' || event.status === 'submitted';
   const isFailed = event.status === 'failed';
+  const { fetchTxDetails } = useBackend();
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [details, setDetails] = useState<any>(null);
+  const [loadingDetails, setLoadingDetails] = useState(false);
+
+  const toggleDetails = async () => {
+    if (!isSuccess || !event.tx_hash) return;
+    if (!isExpanded && !details) {
+      setLoadingDetails(true);
+      const res = await fetchTxDetails(event.tx_hash);
+      if (res?.success && res.decoded) {
+        setDetails(res.data);
+      }
+      setLoadingDetails(false);
+    }
+    setIsExpanded(!isExpanded);
+  };
 
   const dotColor = isSuccess ? 'bg-emerald-500' : isFailed ? 'bg-red-500' : 'bg-blue-500';
   const lineColor = isSuccess ? 'bg-emerald-200' : isFailed ? 'bg-red-200' : 'bg-blue-200';
@@ -314,6 +332,7 @@ function TimelineItem({ event, isLast }: { event: any; isLast: boolean }) {
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-center gap-1.5 px-2 py-1 bg-emerald-50 text-emerald-700 rounded-md border border-emerald-100/50 hover:bg-emerald-100 transition-all cursor-pointer group/link shadow-sm"
+                    onClick={(e) => e.stopPropagation()}
                   >
                     <ShieldCheck className="w-3 h-3 transition-transform group-hover/link:rotate-12" />
                     <span className="text-[9px] font-black uppercase tracking-widest font-mono">
@@ -322,10 +341,18 @@ function TimelineItem({ event, isLast }: { event: any; isLast: boolean }) {
                   </a>
                 )}
                 {isSuccess && (
-                  <div className="flex items-center gap-1.5 px-2 py-1 bg-primary/5 text-primary rounded-md border border-primary/10">
-                    <Cpu className="w-3 h-3" />
-                    <span className="text-[9px] font-black uppercase tracking-widest">On-Chain Trigger</span>
-                  </div>
+                  <>
+                    <div className="flex items-center gap-1.5 px-2 py-1 bg-primary/5 text-primary rounded-md border border-primary/10">
+                      <Cpu className="w-3 h-3" />
+                      <span className="text-[9px] font-black uppercase tracking-widest">On-Chain Trigger</span>
+                    </div>
+                    <button 
+                      onClick={toggleDetails}
+                      className="flex items-center gap-1.5 px-2 py-1 bg-slate-100 text-slate-600 rounded-md border border-slate-200 hover:bg-slate-200 transition-all text-[9px] font-black uppercase tracking-widest"
+                    >
+                      {loadingDetails ? 'Decoding...' : isExpanded ? 'Hide Split' : 'View Split'}
+                    </button>
+                  </>
                 )}
                 {event.retry_count > 0 && (
                   <div className="flex items-center gap-1.5 px-2 py-1 bg-amber-50 text-amber-700 rounded-md border border-amber-100/50">
@@ -333,6 +360,23 @@ function TimelineItem({ event, isLast }: { event: any; isLast: boolean }) {
                     <span className="text-[9px] font-black uppercase tracking-widest">Retry {event.retry_count}</span>
                   </div>
                 )}
+              </div>
+            )}
+
+            {isExpanded && details && (
+              <div className="mt-4 p-3 bg-slate-50 rounded-xl border border-slate-100 grid grid-cols-3 gap-2 animate-in fade-in slide-in-from-top-1">
+                <div className="space-y-1">
+                  <p className="text-[8px] font-black uppercase text-slate-400 tracking-wider">Savings</p>
+                  <p className="text-xs font-bold text-emerald-600">+{Number(details.savings).toFixed(2)}</p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-[8px] font-black uppercase text-slate-400 tracking-wider">Bills</p>
+                  <p className="text-xs font-bold text-blue-600">+{Number(details.bills).toFixed(2)}</p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-[8px] font-black uppercase text-slate-400 tracking-wider">Spend</p>
+                  <p className="text-xs font-bold text-slate-900">+{Number(details.spend).toFixed(2)}</p>
+                </div>
               </div>
             )}
           </div>

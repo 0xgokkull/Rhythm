@@ -179,6 +179,34 @@ app.post('/execution/trigger', rateLimit, async (req, res) => {
   }
 });
 
+app.get('/tx/:hash', async (req, res) => {
+  try {
+    const receipt = await provider.getTransactionReceipt(req.params.hash);
+    if (!receipt) return res.status(404).json({ error: 'Transaction receipt not found' });
+    
+    // Look for VaultUpdated in the logs
+    const vaultUpdatedTopic = '0x21b2d4f2fd79e83ec5517173b9e075e7a9e32f4a478939c3e9a7e089d81d2f8a';
+    const log = receipt.logs.find(l => l.topics[0] === vaultUpdatedTopic);
+    
+    if (!log) return res.json({ success: true, decoded: false });
+    
+    const iface = new ethers.Interface(ABIS.VaultLedger);
+    const parsed = iface.parseLog(log);
+    
+    res.json({
+      success: true,
+      decoded: true,
+      data: {
+        user: parsed.args[0],
+        savings: ethers.formatEther(parsed.args[1]),
+        bills: ethers.formatEther(parsed.args[2]),
+        spend: ethers.formatEther(parsed.args[3]),
+        timestamp: Number(receipt.timestamp || Date.now() / 1000)
+      }
+    });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 app.get('/activity/:user', async (req, res) => {
   try {
     const { data: rows, error } = await supabase.from('executions').select('*').eq('user_address', req.params.user.toLowerCase()).order('timestamp', { ascending: false }).limit(20);

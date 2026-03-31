@@ -50,6 +50,7 @@ interface BackendState {
   updateRules: (savings: number, bills: number) => Promise<void>;
   refreshData: () => Promise<void>;
   connectWallet: () => Promise<boolean>;
+  fetchTxDetails: (hash: string) => Promise<any>;
 }
 
 const BackendContext = createContext<BackendState | null>(null);
@@ -135,18 +136,31 @@ export function BackendProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const [lastBalanceFetch, setLastBalanceFetch] = useState(0);
+
   const fetchWalletBalance = useCallback(async () => {
     if (!userAddress || typeof window === 'undefined' || !(window as any).ethereum) return;
+    
+    // Cooldown: If last fetch failed or was very recent, don't spam if RPC is likely down
+    const now = Date.now();
+    if (now - lastBalanceFetch < 10000 && balance === 'Offline') return;
+
     try {
       const hexBalance = await (window as any).ethereum.request({
         method: 'eth_getBalance',
         params: [userAddress, 'latest'],
       });
       setBalance(Number(ethers.formatEther(hexBalance)).toFixed(4));
-    } catch (e) {
-      console.error('Fetch wallet balance failed:', e);
+    } catch (e: any) {
+      setLastBalanceFetch(now);
+      // Silently handle common RPC/Network errors to prevent console spam
+      if (e.code === -32002 || e.message?.includes('RPC') || e.message?.includes('fetch')) {
+        if (balance !== 'Offline') setBalance('Offline');
+      } else {
+        console.warn('Wallet balance sync paused:', e.message || e);
+      }
     }
-  }, [userAddress]);
+  }, [userAddress, balance, lastBalanceFetch]);
 
   const fetchVaults = useCallback(async () => {
     if (!userAddress) return;
@@ -245,10 +259,21 @@ export function BackendProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const fetchTxDetails = async (hash: string) => {
+    try {
+      const res = await fetch(`${API_URL}/tx/${hash}`);
+      if (res.ok) return await res.json();
+      return null;
+    } catch (e) {
+      console.error('Fetch TX details failed:', e);
+      return null;
+    }
+  };
+
   return (
     <BackendContext.Provider value={{
       vaults, rules, timeline, systemStatus, balance, salary, isEnginePaused, isLoading, userAddress, isConnecting,
-      setSalary, toggleEngine, triggerExecution, updateRules, refreshData, connectWallet
+      setSalary, toggleEngine, triggerExecution, updateRules, refreshData, connectWallet, fetchTxDetails
     }}>
       {children}
     </BackendContext.Provider>
