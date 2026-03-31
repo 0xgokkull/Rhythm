@@ -1,6 +1,7 @@
 'use client';
 
 import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
+import { ethers } from 'ethers';
 
 export interface TimelineEvent {
   tx_hash: string;
@@ -37,6 +38,7 @@ interface BackendState {
   rules: { savings: number; bills: number; spend: number } | null;
   timeline: TimelineEvent[];
   systemStatus: SystemStatus | null;
+  balance: string | null;
   salary: number;
   isEnginePaused: boolean;
   isLoading: boolean;
@@ -71,6 +73,7 @@ const FLOW_TESTNET_CONFIG = {
 export function BackendProvider({ children }: { children: ReactNode }) {
   const [userAddress, setUserAddress] = useState<string | null>(null);
   const [isConnecting, setIsConnecting] = useState(false);
+  const [balance, setBalance] = useState<string | null>(null);
 
   const [vaults, setVaults] = useState<VaultBalances | null>(null);
   const [rules, setRules] = useState<{ savings: number; bills: number; spend: number } | null>(null);
@@ -132,6 +135,19 @@ export function BackendProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const fetchWalletBalance = useCallback(async () => {
+    if (!userAddress || typeof window === 'undefined' || !(window as any).ethereum) return;
+    try {
+      const hexBalance = await (window as any).ethereum.request({
+        method: 'eth_getBalance',
+        params: [userAddress, 'latest'],
+      });
+      setBalance(Number(ethers.formatEther(hexBalance)).toFixed(4));
+    } catch (e) {
+      console.error('Fetch wallet balance failed:', e);
+    }
+  }, [userAddress]);
+
   const fetchVaults = useCallback(async () => {
     if (!userAddress) return;
     try {
@@ -179,9 +195,15 @@ export function BackendProvider({ children }: { children: ReactNode }) {
   const refreshData = useCallback(async () => {
     if (!userAddress) return;
     setIsLoading(true);
-    await Promise.all([fetchVaults(), fetchRules(), fetchTimeline(), fetchSystemStatus()]);
+    await Promise.all([
+      fetchVaults(), 
+      fetchRules(), 
+      fetchTimeline(), 
+      fetchSystemStatus(),
+      fetchWalletBalance()
+    ]);
     setIsLoading(false);
-  }, [userAddress, fetchVaults, fetchRules, fetchTimeline, fetchSystemStatus]);
+  }, [userAddress, fetchVaults, fetchRules, fetchTimeline, fetchSystemStatus, fetchWalletBalance]);
 
   useEffect(() => {
     if (userAddress) {
@@ -225,7 +247,7 @@ export function BackendProvider({ children }: { children: ReactNode }) {
 
   return (
     <BackendContext.Provider value={{
-      vaults, rules, timeline, systemStatus, salary, isEnginePaused, isLoading, userAddress, isConnecting,
+      vaults, rules, timeline, systemStatus, balance, salary, isEnginePaused, isLoading, userAddress, isConnecting,
       setSalary, toggleEngine, triggerExecution, updateRules, refreshData, connectWallet
     }}>
       {children}

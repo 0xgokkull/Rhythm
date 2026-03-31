@@ -11,7 +11,7 @@ import { useBackend } from '@/context/BackendContext';
 
 export default function TopHeader({ isCollapsed }: { isCollapsed?: boolean }) {
   const pathname = usePathname();
-  const { userAddress } = useBackend();
+  const { userAddress, balance } = useBackend();
 
   const getTitle = () => {
     const segments = pathname.split('/').filter(Boolean);
@@ -61,7 +61,7 @@ export default function TopHeader({ isCollapsed }: { isCollapsed?: boolean }) {
               {userAddress ? `${userAddress.slice(0, 6)}...${userAddress.slice(-4)}` : 'Disconnected'}
             </p>
             <p className="text-[11px] text-slate-400 font-bold leading-none mt-1">
-              {userAddress ? 'Flow EVM' : 'Connect'}
+              {userAddress ? (balance ? `${balance} FLOW` : 'Fetching...') : 'Connect Wallet'}
             </p>
           </div>
           <div className="w-9 h-9 rounded-xl border flex items-center justify-center transition-colors shadow-sm
