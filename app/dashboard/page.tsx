@@ -14,7 +14,8 @@ import {
   Receipt,
   ShoppingBag,
   ShieldCheck,
-  Cpu
+  Cpu,
+  Plus
 } from 'lucide-react';
 import PageTransition from '@/components/PageTransition';
 import { useBackend } from '@/context/BackendContext';
@@ -29,6 +30,20 @@ export default function DashboardPage() {
   const failureRate = systemStatus ? systemStatus.failure_rate : '0%';
   const savingsRule = rules ? rules.savings : 0;
   
+  const [isFunding, setIsFunding] = useState(false);
+  const [fundAmount, setFundAmount] = useState('10');
+  const [isProcessingFund, setIsProcessingFund] = useState(false);
+
+  const handleDeposit = async () => {
+    if (!fundAmount || parseFloat(fundAmount) <= 0) return;
+    setIsProcessingFund(true);
+    const success = await backend.depositFunds(fundAmount);
+    if (success) {
+      setIsFunding(false);
+      setFundAmount('10');
+    }
+    setIsProcessingFund(false);
+  };
   const containerVariants: any = {
     hidden: { opacity: 0 },
     visible: { opacity: 1, transition: { staggerChildren: 0.08, delayChildren: 0.05 } }
@@ -103,6 +118,55 @@ export default function DashboardPage() {
               </div>
             </div>
             
+            <div className="p-4 bg-primary/5 rounded-2xl border border-primary/10 relative overflow-hidden group">
+              <div className="flex items-center justify-between relative z-10">
+                <div>
+                  <p className="text-[10px] font-black text-primary uppercase tracking-widest mb-1">Salary Treasury</p>
+                  <h4 className="text-xl font-black text-slate-900 tracking-tight">
+                    {vaults?.unprocessed || '0.00'} <span className="text-xs font-bold text-slate-400">FLOW</span>
+                  </h4>
+                  <p className="text-[10px] text-slate-500 font-medium mt-1 italic">Ready for split</p>
+                </div>
+                <button 
+                  onClick={() => setIsFunding(!isFunding)}
+                  className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-xl font-black text-[10px] uppercase tracking-widest hover:shadow-lg hover:shadow-primary/20 transition-all active:scale-95"
+                >
+                  <Plus className="w-3 h-3" /> Top Up
+                </button>
+              </div>
+
+              <AnimatePresence>
+                {isFunding && (
+                  <motion.div 
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    className="absolute inset-0 bg-white/95 backdrop-blur-sm flex items-center px-4 gap-2 z-20 border border-primary/20 rounded-2xl"
+                  >
+                    <input 
+                      type="number"
+                      value={fundAmount}
+                      onChange={(e) => setFundAmount(e.target.value)}
+                      className="flex-1 h-10 bg-slate-50 border border-slate-200 rounded-xl px-4 text-sm font-bold text-slate-900 focus:ring-2 focus:ring-primary/20 focus:outline-none"
+                      placeholder="Amount..."
+                      autoFocus
+                    />
+                    <button 
+                      onClick={handleDeposit}
+                      disabled={isProcessingFund}
+                      className="h-10 px-5 bg-primary text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-primary-dark disabled:opacity-50 transition-all flex items-center gap-2 shadow-md shadow-primary/10"
+                    >
+                      {isProcessingFund ? <Loader2 className="w-3 h-3 animate-spin" /> : <Plus className="w-3 h-3" />}
+                      Add
+                    </button>
+                    <button onClick={() => setIsFunding(false)} className="text-slate-400 hover:text-slate-600 p-1">
+                      <XCircle className="w-5 h-5" />
+                    </button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+
             <VaultCard 
               icon={PiggyBank}
               name="Savings" 
@@ -128,8 +192,8 @@ export default function DashboardPage() {
               iconBg="bg-slate-50"
             />
 
-            <div className="px-5 py-3 bg-slate-50 rounded-xl border border-slate-100 flex items-center justify-between">
-              <span className="text-sm text-slate-500 font-bold">Total Funds</span>
+            <div className="px-5 py-3 bg-slate-50 rounded-xl border border-slate-100 flex items-center justify-between group overflow-hidden relative">
+              <span className="text-sm text-slate-500 font-bold">Total Wealth</span>
               <span className="text-base font-black text-slate-900">{totalFunds.toFixed(2)} FLOW <span className="text-[11px] text-slate-400 font-bold">(Testnet)</span></span>
             </div>
           </motion.div>

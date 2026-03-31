@@ -20,6 +20,7 @@ export interface VaultBalances {
   bills: string;
   spend: string;
   total: string;
+  unprocessed: string;
   updatedAt: number;
 }
 
@@ -51,6 +52,7 @@ interface BackendState {
   refreshData: () => Promise<void>;
   connectWallet: () => Promise<boolean>;
   fetchTxDetails: (hash: string) => Promise<any>;
+  depositFunds: (amount: string) => Promise<boolean>;
 }
 
 const BackendContext = createContext<BackendState | null>(null);
@@ -270,10 +272,31 @@ export function BackendProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const depositFunds = async (amountStr: string): Promise<boolean> => {
+    if (!userAddress || typeof window === 'undefined' || !(window as any).ethereum) return false;
+    try {
+      const provider = new ethers.BrowserProvider((window as any).ethereum);
+      const signer = await provider.getSigner();
+      const treasury = new ethers.Contract(
+        '0x04F80c1DA4D8FCf676E7174e3BBA47BF367a73F9', 
+        ['function deposit() external payable'], 
+        signer
+      );
+
+      const tx = await treasury.deposit({ value: ethers.parseEther(amountStr) });
+      await tx.wait(1);
+      setTimeout(refreshData, 1000);
+      return true;
+    } catch (e) {
+      console.error('Deposit failed:', e);
+      return false;
+    }
+  };
+
   return (
     <BackendContext.Provider value={{
       vaults, rules, timeline, systemStatus, balance, salary, isEnginePaused, isLoading, userAddress, isConnecting,
-      setSalary, toggleEngine, triggerExecution, updateRules, refreshData, connectWallet, fetchTxDetails
+      setSalary, toggleEngine, triggerExecution, updateRules, refreshData, connectWallet, fetchTxDetails, depositFunds
     }}>
       {children}
     </BackendContext.Provider>

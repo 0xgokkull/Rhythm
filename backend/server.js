@@ -40,6 +40,10 @@ const ABIS = {
     'event ExecutionCompleted(address indexed user, bytes32 executionId)',
     'event ExecutionFailed(address indexed user, string reason, uint8 attempt)',
     'event RetryScheduled(address indexed user, uint8 attempt, uint256 nextRetryTime)'
+  ],
+  TreasuryManager: [
+    'function userDeposits(address) external view returns (uint256)',
+    'function deposit() external payable'
   ]
 };
 
@@ -129,11 +133,13 @@ app.get('/vault/:user', async (req, res) => {
   try {
     const [savings, bills, spend, updatedAt] = await vaultLedger.getBalances(req.params.user);
     const total = await vaultLedger.getTotalBalance(req.params.user);
+    const unprocessed = await treasuryManager.userDeposits(req.params.user);
     const data = {
       savings: ethers.formatEther(savings),
       bills: ethers.formatEther(bills),
       spend: ethers.formatEther(spend),
       total: ethers.formatEther(total),
+      unprocessed: ethers.formatEther(unprocessed),
       updatedAt: Number(updatedAt),
     };
     const { error } = await supabase.from('vaults').upsert({
