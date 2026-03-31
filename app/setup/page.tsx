@@ -11,10 +11,12 @@ import {
   Settings2,
   CheckCircle2,
   Clock,
-  Info
+  Info,
+  Loader2
 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import PageTransition from '@/components/PageTransition';
-import { useSimulation } from '@/context/SimulationContext';
+import { useBackend } from '@/context/BackendContext';
 
 const PRESETS = [
   { id: 'conservative', label: 'Conservative', desc: 'Low risk, steady growth', savings: 20, bills: 50, spend: 30 },
@@ -23,19 +25,27 @@ const PRESETS = [
 ];
 
 export default function SetupPage() {
-  const sim = useSimulation();
-  const [deposit, setDeposit] = useState(sim.salary.toString());
+  const backend = useBackend();
+  const router = useRouter();
+  
+  const [deposit, setDeposit] = useState(backend.salary.toString());
   const [activePreset, setActivePreset] = useState('balanced');
   const [showAdvanced, setShowAdvanced] = useState(false);
-  const [savings, setSavings] = useState(sim.rules.savings);
-  const [bills, setBills] = useState(sim.rules.bills);
-  const [saved, setSaved] = useState(false);
+  
+  const initialSavings = backend.rules ? backend.rules.savings : 30;
+  const initialBills = backend.rules ? backend.rules.bills : 40;
+  
+  const [savings, setSavings] = useState(initialSavings);
+  const [bills, setBills] = useState(initialBills);
+  const [isSaving, setIsSaving] = useState(false);
 
   const spend = 100 - savings - bills;
   const numDeposit = parseFloat(deposit) || 0;
-  const savingsAmt = parseFloat(((numDeposit * savings) / 100).toFixed(1));
-  const billsAmt = parseFloat(((numDeposit * bills) / 100).toFixed(1));
-  const spendAmt = parseFloat((numDeposit - savingsAmt - billsAmt).toFixed(1));
+  const savingsAmt = parseFloat(((numDeposit * savings) / 100).toFixed(2));
+  const billsAmt = parseFloat(((numDeposit * bills) / 100).toFixed(2));
+  const spendAmt = parseFloat((numDeposit - savingsAmt - billsAmt).toFixed(2));
+
+  const isValid = savings + bills <= 100 && savings >= 0 && bills >= 0;
 
   const selectPreset = (preset: typeof PRESETS[0]) => {
     setActivePreset(preset.id);
@@ -43,11 +53,13 @@ export default function SetupPage() {
     setBills(preset.bills);
   };
 
-  const handleSave = () => {
-    sim.setRules({ savings, bills, spend });
-    sim.setSalary(numDeposit);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
+  const handleSave = async () => {
+    if (!isValid) return;
+    setIsSaving(true);
+    backend.setSalary(numDeposit);
+    await backend.updateRules(savings, bills);
+    setIsSaving(false);
+    router.push('/dashboard');
   };
 
   const containerVariants: any = {
@@ -68,21 +80,15 @@ export default function SetupPage() {
         animate="visible"
         className="space-y-6"
       >
-        {}
         <motion.header variants={itemVariants} className="flex items-center justify-between pb-5 border-b border-slate-100">
           <div>
             <h1 className="text-2xl font-black text-slate-900 tracking-tight mb-0.5">Configure Autopilot</h1>
-            <p className="text-xs text-slate-500 font-medium">Set your split rules. Funds auto-allocate on every deposit.</p>
+            <p className="text-xs text-slate-500 font-medium">Set your smart contract split rules. Funds auto-allocate on every deposit.</p>
           </div>
         </motion.header>
 
-        {}
         <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
-
-          {}
           <div className="xl:col-span-7 space-y-5">
-
-            {}
             <motion.div variants={itemVariants} className="card-web p-6">
               <div className="flex items-center justify-between mb-3">
                 <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">Test Deposit Amount</label>
@@ -101,7 +107,6 @@ export default function SetupPage() {
               </div>
             </motion.div>
 
-            {}
             <motion.div variants={itemVariants} className="space-y-3">
               <div className="flex items-center justify-between px-1">
                 <h3 className="text-sm font-bold text-slate-900">Choose a Strategy</h3>
@@ -137,7 +142,6 @@ export default function SetupPage() {
               </div>
             </motion.div>
 
-            {}
             {showAdvanced && (
               <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="space-y-3">
                 <SliderRow label="Savings" icon={<PiggyBank className="w-4 h-4" />} value={savings} onChange={(v: number) => { if (v + bills <= 100) setSavings(v); }} />
@@ -147,28 +151,25 @@ export default function SetupPage() {
                     <div className="p-2 bg-white rounded-lg border border-slate-100"><ShoppingBag className="w-4 h-4 text-slate-400" /></div>
                     <span className="text-sm font-bold text-slate-600">Spend (remainder)</span>
                   </div>
-                  <span className="text-lg font-black text-slate-400">{spend}%</span>
+                  <span className={`text-lg font-black ${spend < 0 ? 'text-red-500' : 'text-slate-400'}`}>{spend}%</span>
                 </div>
               </motion.div>
             )}
 
-            {}
             <motion.div variants={itemVariants}>
               <button 
                 onClick={handleSave}
+                disabled={!isValid || isSaving}
                 className={`w-full h-12 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all duration-300 active:scale-[0.98] ${
-                  saved ? 'bg-emerald-500 text-white' : 'bg-primary text-white hover:shadow-lg hover:shadow-primary/20 hover:-translate-y-0.5'
+                  isSaving ? 'bg-slate-800 text-white' : 'bg-primary text-white hover:shadow-lg hover:shadow-primary/20 hover:-translate-y-0.5'
                 }`}
               >
-                {saved ? <><CheckCircle2 className="w-4 h-4" /> Rules Saved</> : <><ArrowRight className="w-4 h-4" /> Save Autopilot Rules</>}
+                {isSaving ? <><Loader2 className="w-4 h-4 animate-spin" /> Committing to Flow EVM...</> : <><ArrowRight className="w-4 h-4" /> Save Autopilot Rules</>}
               </button>
             </motion.div>
           </div>
 
-          {}
           <div className="xl:col-span-5 space-y-5 xl:sticky xl:top-8">
-
-            {}
             {numDeposit > 0 && (
               <motion.div variants={itemVariants} className="p-6 bg-primary text-white rounded-3xl shadow-lg shadow-primary/20">
                 <h3 className="text-xs font-bold uppercase tracking-widest text-white/60 mb-5">
@@ -189,24 +190,23 @@ export default function SetupPage() {
                   </div>
                   <div className="flex items-center gap-2 text-[12px] text-white/40 font-black tracking-widest uppercase">
                     <Zap className="w-3.5 h-3.5 fill-current text-secondary" />
-                    Gasless
+                    Gasless Mode
                   </div>
                 </div>
               </motion.div>
             )}
 
-            {}
             <motion.div variants={itemVariants} className="card-web p-6">
               <h4 className="text-sm font-bold text-slate-900 mb-4">How Autopilot Works</h4>
               <div className="space-y-3">
                 <StepItem num="1" text="Deposit lands in your account" />
                 <StepItem num="2" text="System auto-detects the deposit" />
-                <StepItem num="3" text="Funds split into vaults by your rules" />
-                <StepItem num="4" text="If it fails, retry engine kicks in" />
+                <StepItem num="3" text="Funds split into vaults by your contract rules" />
+                <StepItem num="4" text="If it fails, exponential retry kicks in" />
               </div>
               <div className="mt-4 pt-3 border-t border-slate-100 flex items-center gap-2">
                 <Zap className="w-3 h-3 text-primary fill-current" />
-                <span className="text-[12px] text-slate-400 font-black uppercase tracking-widest">Powered by Flow · Gasless</span>
+                <span className="text-[12px] text-slate-400 font-black uppercase tracking-widest">Powered by Flow EVM · Gasless</span>
               </div>
             </motion.div>
           </div>
@@ -240,7 +240,7 @@ function OutcomeRow({ icon: Icon, label, pct, amount }: any) {
       </div>
       <div className="text-right">
         <span className="text-2xl font-black">{pct}%</span>
-        <p className="text-sm text-white/50 font-medium tracking-tight">= {amount} FLOW</p>
+        <p className="text-sm text-white/50 font-medium tracking-tight">= {amount.toFixed(2)} FLOW</p>
       </div>
     </div>
   );
