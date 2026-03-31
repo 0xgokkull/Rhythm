@@ -1,63 +1,130 @@
 const { ethers } = require('ethers');
 const supabase = require('./supabase');
+const fs = require('fs');
+const path = require('path');
 require('dotenv').config();
+
+const STATE_FILE = '/data/indexer_state.json';
 
 class EventIndexer {
     constructor(rpcUrl, contracts) {
         this.provider = new ethers.JsonRpcProvider(rpcUrl);
         this.contracts = contracts;
+        this.lastBlock = 0;
+        this.isScanning = false;
+        
+        // Initialize Interfaces for parsing logs
+        this.interfaces = {};
+        for (const [name, config] of Object.entries(contracts)) {
+            this.interfaces[name] = new ethers.Interface(config.abi);
+        }
+    }
+
+    async loadState() {
+        try {
+            if (fs.existsSync(STATE_FILE)) {
+                const data = JSON.parse(fs.readFileSync(STATE_FILE, 'utf8'));
+                this.lastBlock = data.lastBlock || 0;
+                console.log(`[Indexer] 💾 Loaded state from disk. lastBlock: ${this.lastBlock}`);
+            } else {
+                this.lastBlock = await this.provider.getBlockNumber();
+                console.log(`[Indexer] 🆕 No state file. Starting from current block: ${this.lastBlock}`);
+                this.saveState();
+            }
+        } catch (e) {
+            console.error('[Indexer] State load failed:', e.message);
+            this.lastBlock = await this.provider.getBlockNumber();
+        }
+    }
+
+    async saveState() {
+        try {
+            const dir = path.dirname(STATE_FILE);
+            if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+            fs.writeFileSync(STATE_FILE, JSON.stringify({ lastBlock: this.lastBlock, updatedAt: Date.now() }));
+        } catch (e) {
+            console.error('[Indexer] State save failed:', e.message);
+        }
     }
 
     async verifyConnection() {
         try {
-            const { error } = await supabase.from('executions').select('count').limit(1);
+            const { error } = await supabase.from('executions').select('count', { count: 'exact', head: true });
             if (error) {
                 console.warn(`[Indexer] ⚠️  Supabase Configuration Issue: ${error.message}`);
-                console.warn('[Indexer] Please ensure you have run the SQL initialization script in your Supabase dashboard.');
+                console.warn('[Indexer] Please ensure the SQL migrations have been run.');
             } else {
-                console.log('[Indexer] ✅  Supabase connection verified. Tables detected.');
+                console.log('[Indexer] ✅ Supabase connection verified.');
             }
         } catch (e) {
-            console.error('[Indexer] ❌ Critical Supabase Connection Failure:', e.message);
+            console.error('[Indexer] ❌ Supabase Failure:', e.message);
         }
     }
 
-    async start() {
-        console.log('[Indexer] Syncing Flow EVM events to Supabase Cloud...');
-        await this.verifyConnection();
-        
-        const ruleContract = new ethers.Contract(
-            this.contracts.RuleEngine.address, 
-            this.contracts.RuleEngine.abi, 
-            this.provider
-        );
-        
-        ruleContract.on('RuleUpdated', async (user, savings, bills, version) => {
-            console.log(`[Indexer] Rule Update for ${user}: ${savings}/${bills}`);
-            try {
-                const { error } = await supabase.from('users').upsert({
+    async poll() {
+        if (this.isScanning) return;
+        this.isScanning = true;
+
+        try {
+            const currentBlock = await this.provider.getBlockNumber();
+            if (currentBlock <= this.lastBlock) {
+                this.isScanning = false;
+                return;
+            }
+
+            // Scan in chunks of 1000 blocks to prevent RPC timeouts
+            const toBlock = Math.min(this.lastBlock + 1000, currentBlock);
+            console.log(`[Indexer] 🔍 Scanning: ${this.lastBlock + 1} -> ${toBlock}`);
+
+            const logs = await this.provider.getLogs({
+                fromBlock: this.lastBlock + 1,
+                toBlock: toBlock,
+                address: Object.values(this.contracts).map(c => c.address)
+            });
+
+            for (const log of logs) {
+                await this.processLog(log);
+            }
+
+            this.lastBlock = toBlock;
+            await this.saveState();
+
+        } catch (e) {
+            console.error('[Indexer] ❌ Polling Cycle Error:', e.message);
+        } finally {
+            this.isScanning = false;
+        }
+    }
+
+    async processLog(log) {
+        try {
+            // Find which contract this log belongs to
+            const contractName = Object.keys(this.contracts).find(
+                name => this.contracts[name].address.toLowerCase() === log.address.toLowerCase()
+            );
+            if (!contractName) return;
+
+            const iface = this.interfaces[contractName];
+            const parsed = iface.parseLog(log);
+            if (!parsed) return;
+
+            console.log(`[Indexer] ⚡ Event: ${contractName}.${parsed.name}`);
+
+            if (parsed.name === 'RuleUpdated') {
+                const [user, savings, bills, version] = parsed.args;
+                await supabase.from('users').upsert({
                     address: user.toLowerCase(),
                     savings_pct: Number(savings),
                     bills_pct: Number(bills),
                     last_updated: Date.now()
                 });
-                if (error) console.error('[Indexer] Sync Error (Rule):', error.message);
-            } catch (e) {
-                console.error('[Indexer] Exception Syncing Rule:', e.message);
-            }
-        });
-
-        const ledgerContract = new ethers.Contract(
-            this.contracts.VaultLedger.address, 
-            this.contracts.VaultLedger.abi, 
-            this.provider
-        );
-        
-        ledgerContract.on('VaultUpdated', async (user, savings, bills, spend) => {
-            console.log(`[Indexer] Vault State Sync for ${user}`);
-            try {
+            } 
+            
+            else if (parsed.name === 'VaultUpdated') {
+                const [user, savings, bills, spend] = parsed.args;
+                const ledgerContract = new ethers.Contract(this.contracts.VaultLedger.address, this.contracts.VaultLedger.abi, this.provider);
                 const total = await ledgerContract.getTotalBalance(user);
-                const { error } = await supabase.from('vaults').upsert({
+                await supabase.from('vaults').upsert({
                     user_address: user.toLowerCase(),
                     savings: ethers.formatEther(savings),
                     bills: ethers.formatEther(bills),
@@ -65,39 +132,32 @@ class EventIndexer {
                     total: ethers.formatEther(total),
                     updated_at: Date.now()
                 });
-                if (error) console.error('[Indexer] Sync Error (Vault):', error.message);
-            } catch (e) {
-                console.error('[Indexer] Exception Syncing Vault:', e.message);
             }
-        });
 
-        const controllerContract = new ethers.Contract(
-            this.contracts.AutomationController.address, 
-            this.contracts.AutomationController.abi, 
-            this.provider
-        );
-
-        controllerContract.on('ExecutionCompleted', async (user, executionId) => {
-            console.log(`[Indexer] Execution Sync for ${user}`);
-            try {
-                const { error } = await supabase.from('executions').update({
+            else if (parsed.name === 'ExecutionCompleted') {
+                const [user, executionId] = parsed.args;
+                await supabase.from('executions').update({
                     status: 'confirmed',
                     stage: 'confirmed',
                     confirmed_at: Date.now()
                 }).eq('execution_id', executionId);
-                if (error) console.error('[Indexer] Sync Error (Execution):', error.message);
-            } catch (e) {
-                console.error('[Indexer] Exception Syncing Execution:', e.message);
             }
-        });
+        } catch (e) {
+            console.error('[Indexer] Event Processing Exception:', e.message);
+        }
+    }
 
-        controllerContract.on('ExecutionFailed', async (user, reason, attempt) => {
-            console.log(`[Indexer] Execution Failure Logged for ${user}: ${reason}`);
-        });
+    async start() {
+        console.log('[Indexer] Production Event Engine starting...');
+        await this.verifyConnection();
+        await this.loadState();
 
-        controllerContract.on('RetryScheduled', async (user, attempt, nextRetryTime) => {
-            console.log(`[Indexer] Retry Logged for ${user}: Attempt ${attempt}`);
-        });
+        // Start the polling loop
+        const loop = async () => {
+            await this.poll();
+            setTimeout(loop, 12000); // 12 second intervals match block times
+        };
+        loop();
     }
 }
 
