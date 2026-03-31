@@ -1,60 +1,38 @@
 const { ethers } = require('ethers');
-const sqlite3 = require('sqlite3').verbose();
-const path = require('path');
+const supabase = require('./supabase');
+require('dotenv').config();
 
 class EventIndexer {
     constructor(rpcUrl, contracts) {
         this.provider = new ethers.JsonRpcProvider(rpcUrl);
         this.contracts = contracts;
-        this.db = new sqlite3.Database(path.join(__dirname, '../data/rhythm.sqlite'));
-        this.initDb();
     }
 
     async initDb() {
-        this.db.serialize(() => {
-            this.db.run(`CREATE TABLE IF NOT EXISTS users (
-                address TEXT PRIMARY KEY,
-                savings_pct INTEGER,
-                bills_pct INTEGER,
-                last_updated INTEGER
-            )`);
-
-            this.db.run(`CREATE TABLE IF NOT EXISTS executions (
-                tx_hash TEXT PRIMARY KEY,
-                user_address TEXT,
-                amount TEXT,
-                status TEXT,
-                timestamp INTEGER,
-                retry_count INTEGER,
-                split_savings TEXT,
-                split_bills TEXT
-            )`);
-
-            this.db.run(`CREATE TABLE IF NOT EXISTS vaults (
-                user_address TEXT PRIMARY KEY,
-                savings TEXT,
-                bills TEXT,
-                spend TEXT,
-                updated_at INTEGER
-            )`);
-            
-            console.log('[Indexer] Local Database Initialized (Production Schema)');
-        });
+        console.log('[Indexer] Supabase Derived-State Sync Initialized');
     }
 
-    
     start() {
-        console.log('[Indexer] Monitoring Flow EVM events...');
+        console.log('[Indexer] Monitoring Flow EVM events (Sync to Supabase)...');
         
         const ruleContract = new ethers.Contract(
             this.contracts.RuleEngine.address, 
             this.contracts.RuleEngine.abi, 
             this.provider
         );
-        ruleContract.on('RuleUpdated', (user, savings, bills, version) => {
+        
+        ruleContract.on('RuleUpdated', async (user, savings, bills, version) => {
             console.log(`[Indexer] Rule Update for ${user}: ${savings}/${bills}`);
-            this.db.run(`INSERT OR REPLACE INTO users (address, savings_pct, bills_pct, last_updated) 
-                VALUES (?, ?, ?, ?)`, [user, savings, bills, Date.now()]);
+            try {
+                await supabase.from('users').upsert({
+                    address: user.toLowerCase(),
+                    savings_pct: Number(savings),
+                    bills_pct: Number(bills),
+                    last_updated: Date.now()
+                });
+            } catch (e) {
+                console.error('[Indexer] Error Syncing Rule:', e.message);
+            }
         });
 
         const ledgerContract = new ethers.Contract(
@@ -62,10 +40,22 @@ class EventIndexer {
             this.contracts.VaultLedger.abi, 
             this.provider
         );
-        ledgerContract.on('VaultUpdated', (user, savings, bills, spend) => {
+        
+        ledgerContract.on('VaultUpdated', async (user, savings, bills, spend) => {
             console.log(`[Indexer] Vault State Sync for ${user}`);
-            this.db.run(`INSERT OR REPLACE INTO vaults (user_address, savings, bills, spend, updated_at) 
-                VALUES (?, ?, ?, ?, ?)`, [user, savings.toString(), bills.toString(), spend.toString(), Date.now()]);
+            try {
+                const total = await ledgerContract.getTotalBalance(user);
+                await supabase.from('vaults').upsert({
+                    user_address: user.toLowerCase(),
+                    savings: ethers.formatEther(savings),
+                    bills: ethers.formatEther(bills),
+                    spend: ethers.formatEther(spend),
+                    total: ethers.formatEther(total),
+                    updated_at: Date.now()
+                });
+            } catch (e) {
+                console.error('[Indexer] Error Syncing Vault:', e.message);
+            }
         });
 
         const controllerContract = new ethers.Contract(
@@ -73,8 +63,18 @@ class EventIndexer {
             this.contracts.AutomationController.abi, 
             this.provider
         );
-        controllerContract.on('ExecutionCompleted', (user) => {
-            console.log(`[Indexer] Execution Cycle Success for ${user}`);
+
+        controllerContract.on('ExecutionCompleted', async (user, executionId) => {
+            console.log(`[Indexer] Execution Sync for ${user}`);
+            try {
+                await supabase.from('executions').update({
+                    status: 'confirmed',
+                    stage: 'confirmed',
+                    confirmed_at: Date.now()
+                }).eq('execution_id', executionId);
+            } catch (e) {
+                console.error('[Indexer] Error Syncing Execution:', e.message);
+            }
         });
     }
 }
