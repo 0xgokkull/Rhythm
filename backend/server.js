@@ -43,7 +43,8 @@ const ABIS = {
   ],
   TreasuryManager: [
     'function userDeposits(address) external view returns (uint256)',
-    'function deposit() external payable'
+    'function deposit() external payable',
+    'function splitSalary(address _user) external'
   ]
 };
 
@@ -176,8 +177,9 @@ app.post('/execution/trigger', rateLimit, async (req, res) => {
   if (insErr) console.warn(`Supabase Sync Warning (Execution Trigger): ${insErr.message}`);
 
   try {
-    const tx = await controller.triggerExecution(user, parsed, executionId);
-    await supabase.from('executions').update({ tx_hash: tx.hash, status: 'submitted', stage: 'Logic Triggered' }).eq('execution_id', executionId);
+    // Calling splitSalary directly on the TreasuryManager as the authorized relayer
+    const tx = await treasuryManager.splitSalary(user);
+    await supabase.from('executions').update({ tx_hash: tx.hash, status: 'submitted', stage: 'Splitting Funds' }).eq('execution_id', executionId);
     await tx.wait(1);
     await supabase.from('executions').update({ status: 'confirmed', stage: 'On-Chain Sync', confirmed_at: Date.now() }).eq('execution_id', executionId);
     res.json({ success: true, txHash: tx.hash, executionId });
