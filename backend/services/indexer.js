@@ -8,12 +8,8 @@ class EventIndexer {
         this.contracts = contracts;
     }
 
-    async initDb() {
-        console.log('[Indexer] Supabase Derived-State Sync Initialized');
-    }
-
     start() {
-        console.log('[Indexer] Monitoring Flow EVM events (Sync to Supabase)...');
+        console.log('[Indexer] Syncing Flow EVM events to Supabase Cloud...');
         
         const ruleContract = new ethers.Contract(
             this.contracts.RuleEngine.address, 
@@ -75,6 +71,14 @@ class EventIndexer {
             } catch (e) {
                 console.error('[Indexer] Error Syncing Execution:', e.message);
             }
+        });
+
+        controllerContract.on('ExecutionFailed', async (user, reason, attempt) => {
+            console.log(`[Indexer] Execution Failure Logged for ${user}: ${reason}`);
+        });
+
+        controllerContract.on('RetryScheduled', async (user, attempt, nextRetryTime) => {
+            console.log(`[Indexer] Retry Logged for ${user}: Attempt ${attempt}`);
         });
     }
 }
