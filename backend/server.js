@@ -64,6 +64,7 @@ try {
 
 const ruleEngine = new ethers.Contract(ADDRESSES.RuleEngine, ABIS.RuleEngine, wallet || provider);
 const vaultLedger = new ethers.Contract(ADDRESSES.VaultLedger, ABIS.VaultLedger, provider);
+const treasuryManager = new ethers.Contract(ADDRESSES.TreasuryManager, ABIS.TreasuryManager, provider);
 const controller = new ethers.Contract(ADDRESSES.AutomationController, ABIS.AutomationController, wallet || provider);
 
 const lastRequest = {};
