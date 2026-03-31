@@ -66,7 +66,7 @@ function rateLimit(req, res, next) {
 app.get('/health', async (_req, res) => {
   try {
     const block = await provider.getBlockNumber();
-    res.json({ status: 'active', block, network: 'Flow EVM Testnet', relayer: !!wallet });
+    res.json({ status: 'active', block, rpc: RPC, relayer: !!wallet });
   } catch (e) {
     res.status(500).json({ status: 'error', error: e.message });
   }
@@ -76,12 +76,13 @@ app.get('/rule/:user', async (req, res) => {
   try {
     const [savings, bills, spend] = await ruleEngine.getRule(req.params.user);
     const data = { savings: Number(savings), bills: Number(bills), spend: Number(spend) };
-    await supabase.from('users').upsert({
+    const { error } = await supabase.from('users').upsert({
       address: req.params.user.toLowerCase(),
       savings_pct: data.savings,
       bills_pct: data.bills,
       last_updated: Date.now()
     });
+    if (error) throw new Error(`Supabase Error: ${error.message}`);
     res.json(data);
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
@@ -94,12 +95,13 @@ app.post('/rule/set', rateLimit, async (req, res) => {
     const tx = await ruleEngine.setRule(savings, bills);
     await tx.wait(1);
     if (user) {
-      await supabase.from('users').upsert({
+      const { error } = await supabase.from('users').upsert({
         address: user.toLowerCase(),
         savings_pct: savings,
         bills_pct: bills,
         last_updated: Date.now()
       });
+      if (error) throw new Error(`Supabase Error: ${error.message}`);
     }
     res.json({ success: true, txHash: tx.hash });
   } catch (e) { res.status(500).json({ error: e.message }); }
@@ -116,7 +118,7 @@ app.get('/vault/:user', async (req, res) => {
       total: ethers.formatEther(total),
       updatedAt: Number(updatedAt),
     };
-    await supabase.from('vaults').upsert({
+    const { error } = await supabase.from('vaults').upsert({
       user_address: req.params.user.toLowerCase(),
       savings: data.savings,
       bills: data.bills,
@@ -124,6 +126,7 @@ app.get('/vault/:user', async (req, res) => {
       total: data.total,
       updated_at: Date.now()
     });
+    if (error) throw new Error(`Supabase Error: ${error.message}`);
     res.json(data);
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
@@ -133,10 +136,10 @@ app.post('/execution/trigger', rateLimit, async (req, res) => {
   if (!wallet) return res.status(400).json({ error: 'No relayer' });
   if (!user || !amount) return res.status(400).json({ error: 'user and amount required' });
 
-  const executionId = '0x' + crypto.createHash('sha256').update(`${user}-${amount}-${Date.now()}`).digest('hex');
+  const executionId = '0x' + crypto.createHash('sha256').update(`${user.toLowerCase()}-${amount}-${Date.now()}`).digest('hex');
   const parsed = ethers.parseEther(String(amount));
 
-  await supabase.from('executions').insert({
+  const { error: insErr } = await supabase.from('executions').insert({
     execution_id: executionId,
     user_address: user.toLowerCase(),
     amount: String(amount),
@@ -144,6 +147,7 @@ app.post('/execution/trigger', rateLimit, async (req, res) => {
     stage: 'trigger',
     timestamp: Date.now()
   });
+  if (insErr) return res.status(500).json({ error: `Supabase Insert Failed: ${insErr.message}` });
 
   try {
     const tx = await controller.triggerExecution(user, parsed, executionId);
@@ -159,7 +163,9 @@ app.post('/execution/trigger', rateLimit, async (req, res) => {
 
 app.get('/activity/:user', async (req, res) => {
   try {
-    const { data: rows } = await supabase.from('executions').select('*').eq('user_address', req.params.user.toLowerCase()).order('timestamp', { ascending: false }).limit(20);
+    const { data: rows, error } = await supabase.from('executions').select('*').eq('user_address', req.params.user.toLowerCase()).order('timestamp', { ascending: false }).limit(20);
+    if (error) throw new Error(`Supabase Activity Query Failed: ${error.message}`);
+    
     const pendingRows = (rows || []).filter(r => r.status === 'pending' || r.status === 'submitted');
     for (const row of pendingRows) {
       if (row.tx_hash) {
@@ -177,7 +183,9 @@ app.get('/activity/:user', async (req, res) => {
 
 app.get('/system/status/:user', async (req, res) => {
   try {
-    const { data: rows } = await supabase.from('executions').select('status, retry_count').eq('user_address', req.params.user.toLowerCase());
+    const { data: rows, error } = await supabase.from('executions').select('status, retry_count').eq('user_address', req.params.user.toLowerCase());
+    if (error) throw new Error(`Supabase Status Query Failed: ${error.message}`);
+    
     const total = rows?.length || 0;
     const success = rows?.filter(r => r.status === 'confirmed')?.length || 0;
     const failed = rows?.filter(r => r.status === 'failed')?.length || 0;

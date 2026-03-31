@@ -8,8 +8,23 @@ class EventIndexer {
         this.contracts = contracts;
     }
 
-    start() {
+    async verifyConnection() {
+        try {
+            const { error } = await supabase.from('executions').select('count').limit(1);
+            if (error) {
+                console.warn(`[Indexer] ⚠️  Supabase Configuration Issue: ${error.message}`);
+                console.warn('[Indexer] Please ensure you have run the SQL initialization script in your Supabase dashboard.');
+            } else {
+                console.log('[Indexer] ✅  Supabase connection verified. Tables detected.');
+            }
+        } catch (e) {
+            console.error('[Indexer] ❌ Critical Supabase Connection Failure:', e.message);
+        }
+    }
+
+    async start() {
         console.log('[Indexer] Syncing Flow EVM events to Supabase Cloud...');
+        await this.verifyConnection();
         
         const ruleContract = new ethers.Contract(
             this.contracts.RuleEngine.address, 
@@ -20,14 +35,15 @@ class EventIndexer {
         ruleContract.on('RuleUpdated', async (user, savings, bills, version) => {
             console.log(`[Indexer] Rule Update for ${user}: ${savings}/${bills}`);
             try {
-                await supabase.from('users').upsert({
+                const { error } = await supabase.from('users').upsert({
                     address: user.toLowerCase(),
                     savings_pct: Number(savings),
                     bills_pct: Number(bills),
                     last_updated: Date.now()
                 });
+                if (error) console.error('[Indexer] Sync Error (Rule):', error.message);
             } catch (e) {
-                console.error('[Indexer] Error Syncing Rule:', e.message);
+                console.error('[Indexer] Exception Syncing Rule:', e.message);
             }
         });
 
@@ -41,7 +57,7 @@ class EventIndexer {
             console.log(`[Indexer] Vault State Sync for ${user}`);
             try {
                 const total = await ledgerContract.getTotalBalance(user);
-                await supabase.from('vaults').upsert({
+                const { error } = await supabase.from('vaults').upsert({
                     user_address: user.toLowerCase(),
                     savings: ethers.formatEther(savings),
                     bills: ethers.formatEther(bills),
@@ -49,8 +65,9 @@ class EventIndexer {
                     total: ethers.formatEther(total),
                     updated_at: Date.now()
                 });
+                if (error) console.error('[Indexer] Sync Error (Vault):', error.message);
             } catch (e) {
-                console.error('[Indexer] Error Syncing Vault:', e.message);
+                console.error('[Indexer] Exception Syncing Vault:', e.message);
             }
         });
 
@@ -63,13 +80,14 @@ class EventIndexer {
         controllerContract.on('ExecutionCompleted', async (user, executionId) => {
             console.log(`[Indexer] Execution Sync for ${user}`);
             try {
-                await supabase.from('executions').update({
+                const { error } = await supabase.from('executions').update({
                     status: 'confirmed',
                     stage: 'confirmed',
                     confirmed_at: Date.now()
                 }).eq('execution_id', executionId);
+                if (error) console.error('[Indexer] Sync Error (Execution):', error.message);
             } catch (e) {
-                console.error('[Indexer] Error Syncing Execution:', e.message);
+                console.error('[Indexer] Exception Syncing Execution:', e.message);
             }
         });
 

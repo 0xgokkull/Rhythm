@@ -133,7 +133,10 @@ export function BackendProvider({ children }: { children: ReactNode }) {
     try {
       const res = await fetch(`${API_URL}/vault/${userAddress}`);
       if (res.ok) setVaults(await res.json());
-    } catch (e) {}
+      else console.warn('Vault fetch failed:', await res.text());
+    } catch (e) {
+      console.error('Network Error (Vault):', e);
+    }
   }, [userAddress]);
 
   const fetchRules = useCallback(async () => {
@@ -141,7 +144,10 @@ export function BackendProvider({ children }: { children: ReactNode }) {
     try {
       const res = await fetch(`${API_URL}/rule/${userAddress}`);
       if (res.ok) setRules(await res.json());
-    } catch (e) {}
+      else console.warn('Rule fetch failed:', await res.text());
+    } catch (e) {
+      console.error('Network Error (Rules):', e);
+    }
   }, [userAddress]);
 
   const fetchTimeline = useCallback(async () => {
@@ -149,7 +155,10 @@ export function BackendProvider({ children }: { children: ReactNode }) {
     try {
       const res = await fetch(`${API_URL}/activity/${userAddress}`);
       if (res.ok) setTimeline(await res.json());
-    } catch (e) {}
+      else console.warn('Activity fetch failed:', await res.text());
+    } catch (e) {
+      console.error('Network Error (Activity):', e);
+    }
   }, [userAddress]);
 
   const fetchSystemStatus = useCallback(async () => {
@@ -157,7 +166,10 @@ export function BackendProvider({ children }: { children: ReactNode }) {
     try {
       const res = await fetch(`${API_URL}/system/status/${userAddress}`);
       if (res.ok) setSystemStatus(await res.json());
-    } catch (e) {}
+      else console.warn('SystemStatus fetch failed:', await res.text());
+    } catch (e) {
+      console.error('Network Error (SystemStatus):', e);
+    }
   }, [userAddress]);
 
   const refreshData = useCallback(async () => {
@@ -180,28 +192,30 @@ export function BackendProvider({ children }: { children: ReactNode }) {
   const triggerExecution = async (amount: number) => {
     if (isEnginePaused || !userAddress) return;
     try {
-      await fetch(`${API_URL}/execution/trigger`, {
+      const res = await fetch(`${API_URL}/execution/trigger`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ user: userAddress, amount })
       });
+      if (!res.ok) console.error('Execution Trigger Failed:', await res.text());
       setTimeout(refreshData, 1000);
     } catch (e) {
-      console.error(e);
+      console.error('Network Error (Execution):', e);
     }
   };
 
   const updateRules = async (savings: number, bills: number) => {
     if (!userAddress) return;
     try {
-      await fetch(`${API_URL}/rule/set`, {
+      const res = await fetch(`${API_URL}/rule/set`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ savings, bills })
+        body: JSON.stringify({ savings, bills, user: userAddress })
       });
+      if (!res.ok) console.error('Rule Update Failed:', await res.text());
       setTimeout(refreshData, 1000);
     } catch (e) {
-      console.error(e);
+      console.error('Network Error (RuleUpdate):', e);
     }
   };
 
