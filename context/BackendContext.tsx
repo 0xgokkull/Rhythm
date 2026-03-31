@@ -58,7 +58,7 @@ export function useBackend() {
   return ctx;
 }
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://rhythm-backend.onrender.com';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://rhythm-zbcx.onrender.com';
 
 const FLOW_TESTNET_CONFIG = {
   chainId: '0x221',
