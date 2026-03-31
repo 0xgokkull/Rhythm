@@ -144,16 +144,16 @@ app.post('/execution/trigger', rateLimit, async (req, res) => {
     user_address: user.toLowerCase(),
     amount: String(amount),
     status: 'pending',
-    stage: 'trigger',
+    stage: 'Request initiated',
     timestamp: Date.now()
   });
   if (insErr) return res.status(500).json({ error: `Supabase Insert Failed: ${insErr.message}` });
 
   try {
     const tx = await controller.triggerExecution(user, parsed, executionId);
-    await supabase.from('executions').update({ tx_hash: tx.hash, status: 'submitted', stage: 'broadcast' }).eq('execution_id', executionId);
+    await supabase.from('executions').update({ tx_hash: tx.hash, status: 'submitted', stage: 'Logic Triggered' }).eq('execution_id', executionId);
     await tx.wait(1);
-    await supabase.from('executions').update({ status: 'confirmed', stage: 'confirmed', confirmed_at: Date.now() }).eq('execution_id', executionId);
+    await supabase.from('executions').update({ status: 'confirmed', stage: 'On-Chain Sync', confirmed_at: Date.now() }).eq('execution_id', executionId);
     res.json({ success: true, txHash: tx.hash, executionId });
   } catch (e) {
     await supabase.from('executions').update({ status: 'failed', error_message: e.message, stage: 'error' }).eq('execution_id', executionId);

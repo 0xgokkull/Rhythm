@@ -303,28 +303,34 @@ function TimelineItem({ event, isLast }: { event: any; isLast: boolean }) {
               {isSuccess ? `Split Execution Confirmed` : isPending ? `Execution Pending` : `Execution Failed`}
             </p>
             <p className="text-[11px] text-slate-500 font-medium mt-1 leading-relaxed">
-              Amount: {event.amount} FLOW. Stage: {event.stage}.
+              Target Volume: {event.amount} FLOW. Stage: {event.stage}.
             </p>
             
             {(event.tx_hash || event.retry_count > 0) && (
-              <div className="flex items-center gap-3 mt-2">
+              <div className="flex flex-wrap items-center gap-2 mt-2.5">
                 {event.tx_hash && (
                   <a 
                     href={`https://evm-testnet.flowscan.io/tx/${event.tx_hash}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-1.5 px-2 py-1 bg-emerald-50 text-emerald-700 rounded-md border border-emerald-100/50 hover:bg-emerald-100 transition-colors cursor-pointer"
+                    className="flex items-center gap-1.5 px-2 py-1 bg-emerald-50 text-emerald-700 rounded-md border border-emerald-100/50 hover:bg-emerald-100 transition-all cursor-pointer group/link shadow-sm"
                   >
-                    <ShieldCheck className="w-3 h-3" />
+                    <ShieldCheck className="w-3 h-3 transition-transform group-hover/link:rotate-12" />
                     <span className="text-[9px] font-black uppercase tracking-widest font-mono">
                       {event.tx_hash.substring(0, 10)}...
                     </span>
                   </a>
                 )}
+                {isSuccess && (
+                  <div className="flex items-center gap-1.5 px-2 py-1 bg-primary/5 text-primary rounded-md border border-primary/10">
+                    <Cpu className="w-3 h-3" />
+                    <span className="text-[9px] font-black uppercase tracking-widest">On-Chain Trigger</span>
+                  </div>
+                )}
                 {event.retry_count > 0 && (
                   <div className="flex items-center gap-1.5 px-2 py-1 bg-amber-50 text-amber-700 rounded-md border border-amber-100/50">
                     <RotateCcw className="w-3 h-3" />
-                    <span className="text-[9px] font-black uppercase tracking-widest">Retry {event.retry_count} Active</span>
+                    <span className="text-[9px] font-black uppercase tracking-widest">Retry {event.retry_count}</span>
                   </div>
                 )}
               </div>
