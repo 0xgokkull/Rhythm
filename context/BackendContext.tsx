@@ -63,7 +63,8 @@ export function useBackend() {
   return ctx;
 }
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://rhythm-zbcx.onrender.com';
+const API_URL = '/api/backend'; // Proxied through Next.js rewrites → localhost:4000 (avoids browser localhost-blocking)
+// For production, set BACKEND_URL env var in next.config.ts (e.g. https://rhythm-zbcx.onrender.com)
 
 const FLOW_TESTNET_CONFIG = {
   chainId: '0x221',
