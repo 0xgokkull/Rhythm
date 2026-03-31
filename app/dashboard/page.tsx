@@ -309,12 +309,17 @@ function TimelineItem({ event, isLast }: { event: any; isLast: boolean }) {
             {(event.tx_hash || event.retry_count > 0) && (
               <div className="flex items-center gap-3 mt-2">
                 {event.tx_hash && (
-                  <div className="flex items-center gap-1.5 px-2 py-1 bg-emerald-50 text-emerald-700 rounded-md border border-emerald-100/50">
+                  <a 
+                    href={`https://evm-testnet.flowscan.io/tx/${event.tx_hash}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1.5 px-2 py-1 bg-emerald-50 text-emerald-700 rounded-md border border-emerald-100/50 hover:bg-emerald-100 transition-colors cursor-pointer"
+                  >
                     <ShieldCheck className="w-3 h-3" />
                     <span className="text-[9px] font-black uppercase tracking-widest font-mono">
                       {event.tx_hash.substring(0, 10)}...
                     </span>
-                  </div>
+                  </a>
                 )}
                 {event.retry_count > 0 && (
                   <div className="flex items-center gap-1.5 px-2 py-1 bg-amber-50 text-amber-700 rounded-md border border-amber-100/50">
