@@ -26,7 +26,7 @@ export default function RootLayout({
 
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${outfit.variable} font-outfit antialiased`}>
+      <body className={`${outfit.variable} font-outfit antialiased`} suppressHydrationWarning>
         <BackendProvider>
           {!isLanding && <OnboardingOverlay />}
           <div className="flex h-screen bg-slate-50 overflow-hidden">
