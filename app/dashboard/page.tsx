@@ -82,7 +82,7 @@ export default function DashboardPage() {
           
           <motion.div variants={itemVariants} className="card-web p-5 flex items-center justify-between group">
             <div>
-              <p className="text-[12px] text-slate-500 font-bold uppercase tracking-widest mb-1">System Failure Rate</p>
+              <p className="text-[12px] text-slate-500 font-bold uppercase tracking-widest mb-1">Your Failure Rate</p>
               <h2 className="text-2xl font-black text-slate-900 tracking-tight leading-none">{failureRate}</h2>
               <p className="text-[12px] text-slate-500 font-medium mt-1">Monitored via events</p>
             </div>
