@@ -10,8 +10,9 @@ const app = express();
 const PORT = process.env.PORT || 4000;
 const RPC = process.env.RPC_URL || 'https://testnet.evm.nodes.onflow.org';
 
+// CORS configuration - ensure it handles all origins for testing
+app.use(cors({ origin: true, credentials: true }));
 app.use(express.json());
-app.use(cors());
 
 const ADDRESSES = {
   RuleEngine: '0x02a0Fc6088A441A6CE86Cf7d09c2a31245e67619',
@@ -43,9 +44,19 @@ const ABIS = {
 };
 
 const provider = new ethers.JsonRpcProvider(RPC);
-const wallet = process.env.RELAYER_PRIVATE_KEY
-  ? new ethers.Wallet(process.env.RELAYER_PRIVATE_KEY, provider)
-  : null;
+
+// Safe Wallet Initialization - Prevents process crash if private key is invalid
+let wallet = null;
+try {
+  if (process.env.RELAYER_PRIVATE_KEY) {
+    wallet = new ethers.Wallet(process.env.RELAYER_PRIVATE_KEY, provider);
+    console.log('[Relayer] ✅ Wallet initialized:', wallet.address);
+  } else {
+    console.warn('[Relayer] ⚠️  RELAYER_PRIVATE_KEY missing. Read-only mode active.');
+  }
+} catch (e) {
+  console.error('[Relayer] ❌ Wallet initialization failed:', e.message);
+}
 
 const ruleEngine = new ethers.Contract(ADDRESSES.RuleEngine, ABIS.RuleEngine, wallet || provider);
 const vaultLedger = new ethers.Contract(ADDRESSES.VaultLedger, ABIS.VaultLedger, provider);
@@ -66,9 +77,16 @@ function rateLimit(req, res, next) {
 app.get('/health', async (_req, res) => {
   try {
     const block = await provider.getBlockNumber();
-    res.json({ status: 'active', block, rpc: RPC, relayer: !!wallet });
+    res.json({ 
+      status: 'active', 
+      block, 
+      rpc: RPC, 
+      relayer: !!wallet,
+      relayer_address: wallet ? wallet.address : null,
+      memory: process.memoryUsage().rss / 1024 / 1024 + ' MB'
+    });
   } catch (e) {
-    res.status(500).json({ status: 'error', error: e.message });
+    res.status(500).json({ status: 'partial_outage', error: e.message });
   }
 });
 
@@ -82,13 +100,13 @@ app.get('/rule/:user', async (req, res) => {
       bills_pct: data.bills,
       last_updated: Date.now()
     });
-    if (error) throw new Error(`Supabase Error: ${error.message}`);
+    if (error) console.error(`Supabase Sync Warning (Rule): ${error.message}`);
     res.json(data);
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 app.post('/rule/set', rateLimit, async (req, res) => {
-  if (!wallet) return res.status(400).json({ error: 'No relayer key' });
+  if (!wallet) return res.status(400).json({ error: 'Relayer is not configured' });
   const { savings, bills, user } = req.body;
   if (savings + bills > 100) return res.status(400).json({ error: 'Rule sum exceeds 100' });
   try {
@@ -101,7 +119,7 @@ app.post('/rule/set', rateLimit, async (req, res) => {
         bills_pct: bills,
         last_updated: Date.now()
       });
-      if (error) throw new Error(`Supabase Error: ${error.message}`);
+      if (error) console.error(`Supabase Sync Warning (Rule Set): ${error.message}`);
     }
     res.json({ success: true, txHash: tx.hash });
   } catch (e) { res.status(500).json({ error: e.message }); }
@@ -126,14 +144,14 @@ app.get('/vault/:user', async (req, res) => {
       total: data.total,
       updated_at: Date.now()
     });
-    if (error) throw new Error(`Supabase Error: ${error.message}`);
+    if (error) console.error(`Supabase Sync Warning (Vault): ${error.message}`);
     res.json(data);
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 app.post('/execution/trigger', rateLimit, async (req, res) => {
   const { user, amount } = req.body;
-  if (!wallet) return res.status(400).json({ error: 'No relayer' });
+  if (!wallet) return res.status(400).json({ error: 'Relayer is not configured' });
   if (!user || !amount) return res.status(400).json({ error: 'user and amount required' });
 
   const executionId = '0x' + crypto.createHash('sha256').update(`${user.toLowerCase()}-${amount}-${Date.now()}`).digest('hex');
@@ -147,7 +165,7 @@ app.post('/execution/trigger', rateLimit, async (req, res) => {
     stage: 'Request initiated',
     timestamp: Date.now()
   });
-  if (insErr) return res.status(500).json({ error: `Supabase Insert Failed: ${insErr.message}` });
+  if (insErr) console.warn(`Supabase Sync Warning (Execution Trigger): ${insErr.message}`);
 
   try {
     const tx = await controller.triggerExecution(user, parsed, executionId);
@@ -195,12 +213,26 @@ app.get('/system/status/:user', async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-app.listen(PORT, () => {
-  console.log(`[Rhythm Backend] :${PORT} | Flow EVM Testnet (Chain 545)`);
-  const indexer = new EventIndexer(RPC, {
-    RuleEngine: { address: ADDRESSES.RuleEngine, abi: ABIS.RuleEngine },
-    VaultLedger: { address: ADDRESSES.VaultLedger, abi: ABIS.VaultLedger },
-    AutomationController: { address: ADDRESSES.AutomationController, abi: ABIS.AutomationController }
+// Global Error Handler - Prevents process crash and ensures CORS on errors
+app.use((err, req, res, next) => {
+  console.error('[Internal Error Catch]', err.stack);
+  res.status(500).json({ 
+    error: 'Internal Server Error',
+    message: err.message,
+    status: 500
   });
-  indexer.start();
+});
+
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`[Rhythm Backend] :${PORT} | Flow EVM Testnet (Chain 545)`);
+  try {
+    const indexer = new EventIndexer(RPC, {
+      RuleEngine: { address: ADDRESSES.RuleEngine, abi: ABIS.RuleEngine },
+      VaultLedger: { address: ADDRESSES.VaultLedger, abi: ABIS.VaultLedger },
+      AutomationController: { address: ADDRESSES.AutomationController, abi: ABIS.AutomationController }
+    });
+    indexer.start();
+  } catch (e) {
+    console.error('[Indexer] ❌ Failed to start indexer on boot:', e.message);
+  }
 });
