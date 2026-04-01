@@ -1,16 +1,20 @@
-# 🎹 Rhythm | Salary Automation on Flow EVM
+# 🎹 Rhythm | Automated DeFi Treasury on Flow EVM
 
-Rhythm is a production-hardened salary splitting platform built on **Flow EVM Testnet**. It enables users to automate their income distribution into different "Vaults" (Savings, Bills, Spend) the moment a deposit lands in their account.
+Rhythm is a decentralized asset management and automated execution platform built on **Flow EVM**. It allows users to automate their income distribution into distinct buckets—**Savings**, **Bills**, and **Spending**—the moment funds land in their account.
+
+🚀 **Live App**: [https://rhythm-autopilot.vercel.app/](https://rhythm-autopilot.vercel.app/)
+📁 **GitHub**: [https://github.com/0xgokkull/Rhythm](https://github.com/0xgokkull/Rhythm)
 
 ---
 
-## 🏗 System Architecture
+## 🏗 How it Works
 
-The platform uses a "Treasury-to-Vault" model synchronized via an automated execution engine.
+Rhythm uses a "Set & Forget" model for wealth management:
 
-1. **Treasury**: Holds incoming funds (unprocessed salary).
-2. **Execution Controller**: Triggers the intelligent split based on user-defined rules.
-3. **Vault Ledger**: Manages the final allocated wealth balances on-chain.
+1.  **Define Rules**: Set your desired percentages for Savings and Bills (e.g., 50% Savings, 30% Bills, 20% Spend).
+2.  **Deposit (Top-Up)**: Add FLOW tokens to your Treasury.
+3.  **Automated Split**: Our execution engine automatically splits and allocates your funds to the correct on-chain vaults.
+4.  **Track Wealth**: Monitor your growing balances and transaction history in real-time.
 
 ---
 
@@ -20,41 +24,43 @@ All contracts are deployed on **Chain ID 545**.
 
 | Component | Contract Address | Role |
 | :--- | :--- | :--- |
-| **TreasuryManager** | `0x04F80c1DA4D8FCf676E7174e3BBA47BF367a73F9` | Holds unprocessed user deposits |
-| **VaultLedger** | `0xb96BFf5fE3ce64D29cAAcC253E2c90392be88085` | tracks allocated wealth (Savings/Bills) |
-| **RuleEngine** | `0x02a0Fc6088A441A6CE86Cf7d09c2a31245e67619` | Manages split % logic (e.g. 50/30/20) |
-| **ExecutionEngine** | `0x6B015Df62da64A12dF2e13d2fFAb9BFd99a838a2` | **Authorized Engine** (Relayer-Role) |
-| **AutomationController** | `0xD93b31cc5B6E995744D0D3c7d09f5c2E340E3b10` | Dispatches splitting commands |
+| **TreasuryManager** | `0xB3100373c3b7A5005AE2Fe0F359a9B1D52B785Ce` | Receives and holds user deposits |
+| **VaultLedger** | `0x814863A0Ce15A079C575EC3929DC130E7CB58837` | Tracks allocated balances (Savings/Bills/Spend) |
+| **RuleEngine** | `0xaFbBc6efc31bA85f6A686FC9925Bf6d136547364` | Stores user-defined split percentages |
+| **ExecutionEngine** | `0xF49579b232659E61daAA2982C5a4BB2bDB09951F` | Core splitting logic executed by relayers |
+| **AutomationController** | `0xbF4E69C78f9CF44f3f49de23E39006a767755912` | Manages relayer interactions and retries |
 
 ---
 
 ## 🚀 Key Features
 
-### 1. **Salary Treasury & Top-Up**
-Users can "Top Up" their Rhythm account from any wallet. Fresh funds are visible in the **Salary Treasury** before being split, ensuring 100% transparency.
-
-### 2. **Native On-Chain Decoding**
-To bypass unreliable blockchain explorer indexing, Rhythm features a **Native Transaction Decoder**. It pulls direct logs from the Flow RPC to show real-time fund breakdowns (e.g., *Savings: +200 FLOW*).
-
-### 3. **Dual-Path Persistence**
-The event indexer uses a dual-path strategy (Render Persistent Disk + Local Fallback) to ensure that your activity history is never lost, even during server restarts.
-
-### 4. **Gasless Logic (Relayer Integration)**
-The backend relayer handles the execution gas costs, providing a seamless "click-to-automate" experience for the end user.
+*   **Zero-Click Management**: Once your rules are set, asset distribution is handled automatically by our backend relayer.
+*   **On-Chain Transparency**: Every split is logged as a blockchain event.
+*   **Real-Time Indexing**: Our custom indexer ensures your dashboard stays perfectly synced with the blockchain.
+*   **Gasless Experience**: Backend relayers handle the transaction gas for splitting, so users don't have to sign multiple complex transactions.
 
 ---
 
 ## 🛠 Tech Stack
 
-- **Frontend**: Next.js 14, Tailwind CSS, Framer Motion, Ethers.js v6
-- **Backend**: Node.js (Express), Supabase (PostgreSQL), Flow EVM RPC
-- **Styling**: Premium Obsidian Dark Aesthetic (Flow Green accents)
+*   **Frontend**: Next.js 14, Tailwind CSS, Framer Motion, Ethers.js
+*   **Backend**: Node.js (Express), Supabase (Activity History)
+*   **Smart Contracts**: Solidity
+*   **Blockchain**: Flow EVM Testnet
 
 ---
 
-## 📦 Setting Up Locally
+## 📦 Local Setup
 
-1. **Clone & Install**:
-   ```bash
-   npm install
-   cd backend && npm install
+1.  **Install Dependencies**:
+    ```bash
+    npm install
+    cd backend && npm install
+    ```
+2.  **Environment Setup**: Create `.env` files in both root and `backend` directories with your RPC URLs and Private Keys.
+3.  **Run Development Server**:
+    ```bash
+    npm run dev
+    # In another terminal
+    cd backend && node server.js
+    ```
