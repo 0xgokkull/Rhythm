@@ -1,10 +1,10 @@
+require('dotenv').config({ path: __dirname + '/.env' });
 const express = require('express');
 const cors = require('cors');
 const { ethers } = require('ethers');
 const crypto = require('crypto');
 const supabase = require('./services/supabase');
 const EventIndexer = require('./services/indexer');
-require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -15,11 +15,11 @@ app.use(cors({ origin: true, credentials: true }));
 app.use(express.json());
 
 const ADDRESSES = {
-  RuleEngine: '0x02a0Fc6088A441A6CE86Cf7d09c2a31245e67619',
-  VaultLedger: '0xb96BFf5fE3ce64D29cAAcC253E2c90392be88085',
-  TreasuryManager: '0x04F80c1DA4D8FCf676E7174e3BBA47BF367a73F9',
-  ExecutionEngine: '0x6B015Df62da64A12dF2e13d2fFAb9BFd99a838a2',
-  AutomationController: '0xD93b31cc5B6E995744D0D3c7d09f5c2E340E3b10',
+  RuleEngine: '0xaFbBc6efc31bA85f6A686FC9925Bf6d136547364',
+  VaultLedger: '0x814863A0Ce15A079C575EC3929DC130E7CB58837',
+  TreasuryManager: '0xB3100373c3b7A5005AE2Fe0F359a9B1D52B785Ce',
+  ExecutionEngine: '0xF49579b232659E61daAA2982C5a4BB2bDB09951F',
+  AutomationController: '0xbF4E69C78f9CF44f3f49de23E39006a767755912',
 };
 
 const ABIS = {
@@ -43,8 +43,7 @@ const ABIS = {
   ],
   TreasuryManager: [
     'function userDeposits(address) external view returns (uint256)',
-    'function deposit() external payable',
-    'function splitSalary(address _user) external'
+    'function deposit() external payable'
   ]
 };
 
@@ -66,8 +65,8 @@ try {
 const ruleEngine = new ethers.Contract(ADDRESSES.RuleEngine, ABIS.RuleEngine, wallet || provider);
 const vaultLedger = new ethers.Contract(ADDRESSES.VaultLedger, ABIS.VaultLedger, provider);
 const treasuryManager = new ethers.Contract(ADDRESSES.TreasuryManager, ABIS.TreasuryManager, wallet || provider);
-// Direct calling of the ExecutionEngine (which is the Relayer's own address as engine)
-const controller = new ethers.Contract(ADDRESSES.ExecutionEngine, ABIS.AutomationController, wallet || provider);
+// Relayer calls AutomationController, which internally delegates to ExecutionEngine
+const controller = new ethers.Contract(ADDRESSES.AutomationController, ABIS.AutomationController, wallet || provider);
 
 const lastRequest = {};
 function rateLimit(req, res, next) {
@@ -99,8 +98,13 @@ app.get('/health', async (_req, res) => {
 
 app.get('/rule/:user', async (req, res) => {
   try {
-    const [savings, bills, spend] = await ruleEngine.getRule(req.params.user);
-    const data = { savings: Number(savings), bills: Number(bills), spend: Number(spend) };
+    const [savings, bills, version] = await ruleEngine.getRule(req.params.user);
+    const data = { 
+      savings: Number(savings), 
+      bills: Number(bills), 
+      spend: 100 - Number(savings) - Number(bills),
+      version: Number(version)
+    };
     const { error } = await supabase.from('users').upsert({
       address: req.params.user.toLowerCase(),
       savings_pct: data.savings,
@@ -177,8 +181,8 @@ app.post('/execution/trigger', rateLimit, async (req, res) => {
   if (insErr) console.warn(`Supabase Sync Warning (Execution Trigger): ${insErr.message}`);
 
   try {
-    // Calling splitSalary directly on the TreasuryManager as the authorized relayer
-    const tx = await treasuryManager.splitSalary(user);
+    // Correct call chain: relayer → AutomationController.triggerExecution → ExecutionEngine.executeAutoSplit
+    const tx = await controller.triggerExecution(user, parsed, executionId);
     await supabase.from('executions').update({ tx_hash: tx.hash, status: 'submitted', stage: 'Splitting Funds' }).eq('execution_id', executionId);
     await tx.wait(1);
     await supabase.from('executions').update({ status: 'confirmed', stage: 'On-Chain Sync', confirmed_at: Date.now() }).eq('execution_id', executionId);
@@ -195,13 +199,13 @@ app.get('/tx/:hash', async (req, res) => {
     if (!receipt) return res.status(404).json({ error: 'Transaction receipt not found' });
     
     // Look for VaultUpdated in the logs
-    const vaultUpdatedTopic = '0x21b2d4f2fd79e83ec5517173b9e075e7a9e32f4a478939c3e9a7e089d81d2f8a';
+    const vaultIface = new ethers.Interface(ABIS.VaultLedger);
+    const vaultUpdatedTopic = vaultIface.getEventTopic('VaultUpdated');
     const log = receipt.logs.find(l => l.topics[0] === vaultUpdatedTopic);
     
     if (!log) return res.json({ success: true, decoded: false });
     
-    const iface = new ethers.Interface(ABIS.VaultLedger);
-    const parsed = iface.parseLog(log);
+    const parsed = vaultIface.parseLog(log);
     
     res.json({
       success: true,
