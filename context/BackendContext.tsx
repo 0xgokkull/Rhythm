@@ -63,8 +63,8 @@ export function useBackend() {
   return ctx;
 }
 
-const API_URL = '/api/backend'; // Proxied through Next.js rewrites → localhost:4000 (avoids browser localhost-blocking)
-// For production, set BACKEND_URL env var in next.config.ts (e.g. https://rhythm-zbcx.onrender.com)
+const API_URL = process.env.NEXT_PUBLIC_API_URL || '/api/backend'; // Proxied locally to localhost:4000, or points to cloud backend in production
+// Suggested production URL for NEXT_PUBLIC_API_URL: https://rhythm-zbcx.onrender.com/api/backend
 
 const FLOW_TESTNET_CONFIG = {
   chainId: '0x221',
@@ -143,8 +143,6 @@ export function BackendProvider({ children }: { children: ReactNode }) {
 
   const fetchWalletBalance = useCallback(async () => {
     if (!userAddress || typeof window === 'undefined' || !(window as any).ethereum) return;
-    
-    // Cooldown: If last fetch failed or was very recent, don't spam if RPC is likely down
     const now = Date.now();
     if (now - lastBalanceFetch < 10000 && balance === 'Offline') return;
 
@@ -156,7 +154,6 @@ export function BackendProvider({ children }: { children: ReactNode }) {
       setBalance(Number(ethers.formatEther(hexBalance)).toFixed(4));
     } catch (e: any) {
       setLastBalanceFetch(now);
-      // Silently handle common RPC/Network errors to prevent console spam
       if (e.code === -32002 || e.message?.includes('RPC') || e.message?.includes('fetch')) {
         if (balance !== 'Offline') setBalance('Offline');
       } else {
