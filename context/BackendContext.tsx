@@ -279,7 +279,7 @@ export function BackendProvider({ children }: { children: ReactNode }) {
       const provider = new ethers.BrowserProvider((window as any).ethereum);
       const signer = await provider.getSigner();
       const treasury = new ethers.Contract(
-        '0x04F80c1DA4D8FCf676E7174e3BBA47BF367a73F9', 
+        '0xB3100373c3b7A5005AE2Fe0F359a9B1D52B785Ce', 
         ['function deposit() external payable'], 
         signer
       );
