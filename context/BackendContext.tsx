@@ -63,8 +63,10 @@ export function useBackend() {
   return ctx;
 }
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || '/api/backend'; // Proxied locally to localhost:4000, or points to cloud backend in production
-// Suggested production URL for NEXT_PUBLIC_API_URL: https://rhythm-zbcx.onrender.com/api/backend
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 
+  (typeof window !== 'undefined' && (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1')
+    ? 'https://rhythm-zbcx.onrender.com/api/backend' 
+    : '/api/backend');
 
 const FLOW_TESTNET_CONFIG = {
   chainId: '0x221',
