@@ -1,13 +1,8 @@
-"use client";
-
 import { Outfit } from "next/font/google";
 import "./globals.css";
-import Sidebar from "@/components/Sidebar";
-import TopHeader from "@/components/TopHeader";
-import OnboardingOverlay from "@/components/OnboardingOverlay";
-import { useState } from "react";
-import { usePathname } from "next/navigation";
-import { BackendProvider } from "@/context/BackendContext";
+import type { Metadata, Viewport } from "next";
+import RootLayoutWrapper from "./RootLayoutWrapper";
+import logo from "./logo.png";
 
 const outfit = Outfit({
   subsets: ["latin"],
@@ -15,37 +10,60 @@ const outfit = Outfit({
   weight: ["300", "400", "500", "600", "700"],
 });
 
+export const viewport: Viewport = {
+  themeColor: "#00BA7A",
+  colorScheme: "light",
+  width: "device-width",
+  initialScale: 1,
+};
+
+export const metadata: Metadata = {
+  title: {
+    default: "Rhythm | Automated DeFi Execution on Flow",
+    template: "%s | Rhythm"
+  },
+  description: "Rhythm is the premier DeFi automation layer for Flow EVM. Automatically split, manage, and execute vault distributions across savings, bills, and spending buckets with 24/7 on-chain indexing.",
+  keywords: ["Rhythm", "Flow EVM", "DeFi Automation", "Smart Execution", "Flow Blockchain", "Treasury Management", "Yield Optimizer"],
+  authors: [{ name: "Rhythm Protocol" }],
+  metadataBase: new URL("https://rhythm.finance"),
+  icons: {
+    icon: logo.src,
+    shortcut: logo.src,
+    apple: logo.src,
+  },
+  openGraph: {
+    title: "Rhythm | Smart DeFi Automation",
+    description: "Manage your assets effortlessly with Flow's smart automation engine. Real-time indexing and automated execution for the modern DeFi user.",
+    type: "website",
+    siteName: "Rhythm",
+    images: [
+      {
+        url: logo.src,
+        width: 800,
+        height: 800,
+        alt: "Rhythm Logo",
+      }
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Rhythm | Automated DeFi",
+    description: "Multi-bucket treasury at your fingertips on Flow EVM.",
+    images: [logo.src],
+  }
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const [isCollapsed, setIsCollapsed] = useState(false);
-  const pathname = usePathname();
-  const isLanding = pathname === '/';
-
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${outfit.variable} font-outfit antialiased`} suppressHydrationWarning>
-        <BackendProvider>
-          {!isLanding && <OnboardingOverlay />}
-          <div className="flex h-screen bg-slate-50 overflow-hidden">
-            {!isLanding && <Sidebar isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />}
-            
-            <div 
-              className={`flex-1 flex flex-col min-w-0 transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] overflow-hidden ${
-                isLanding ? 'pl-0' : (isCollapsed ? 'pl-[80px]' : 'pl-[280px]')
-              }`}
-            >
-              {!isLanding && <TopHeader isCollapsed={isCollapsed} />}
-              <main className="flex-1 overflow-y-auto">
-                <div className={`${isLanding ? '' : 'wide-container py-4'}`}>
-                  {children}
-                </div>
-              </main>
-            </div>
-          </div>
-        </BackendProvider>
+      <body className={`${outfit.variable} font-outfit antialiased bg-slate-50`} suppressHydrationWarning>
+        <RootLayoutWrapper>
+          {children}
+        </RootLayoutWrapper>
       </body>
     </html>
   );
