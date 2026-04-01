@@ -65,7 +65,7 @@ export function useBackend() {
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 
   (typeof window !== 'undefined' && (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1')
-    ? 'https://rhythm-zbcx.onrender.com/api/backend' 
+    ? 'https://rhythm-zbcx.onrender.com' 
     : '/api/backend');
 
 const FLOW_TESTNET_CONFIG = {
