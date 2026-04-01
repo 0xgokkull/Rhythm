@@ -12,6 +12,7 @@ import {
   ChevronLeft,
   Zap
 } from 'lucide-react';
+import logo from '@/app/logo.png';
 
 const menuItems = [
   { icon: LayoutDashboard, label: 'Dashboard', href: '/dashboard' },
@@ -32,9 +33,13 @@ export default function Sidebar({ isCollapsed, setIsCollapsed }: any) {
     >
       {}
       <div className={`h-20 flex items-center shrink-0 border-b border-slate-100 transition-all duration-500 ${isCollapsed ? 'justify-center px-0' : 'px-6'}`}>
-        <Link href="/dashboard" className="flex items-center gap-3 group">
-          <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center text-white shrink-0 group-hover:scale-105 transition-transform shadow-lg shadow-primary/10">
-            <Zap className="w-5 h-5 fill-current" />
+        <Link href="/dashboard" className="flex items-center gap-1 group">
+          <div className="w-10 h-10 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+            <img 
+              src={logo.src} 
+              alt="Rhythm Logo" 
+              className="w-10 h-10 rounded-xl object-contain"
+            />
           </div>
           {!isCollapsed && (
             <motion.span 
@@ -43,7 +48,7 @@ export default function Sidebar({ isCollapsed, setIsCollapsed }: any) {
               transition={{ duration: 0.3 }}
               className="text-xl font-black tracking-tighter text-slate-900"
             >
-              Rhythm
+              rhythm
             </motion.span>
           )}
         </Link>
